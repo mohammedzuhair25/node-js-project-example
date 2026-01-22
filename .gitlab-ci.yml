@@ -1,6 +1,6 @@
-#workflow:
-#  rules:
-#    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
 
 stages:
   - build
@@ -35,9 +35,9 @@ build:
     paths:
       - node_modules/
     expire_in: 1 hour
-#  rules:
-#    - if: '$CI_COMMIT_BRANCH != "main"'
-#      when: always
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "main"'
+      when: always
 
 
 # -------------------
@@ -50,9 +50,9 @@ test:
     - build
   script:
     - echo "Running tests..."
- # rules:
- #   - if: '$CI_COMMIT_BRANCH != "main"'
- #     when: always
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "main"'
+      when: always
 
 
 
@@ -69,9 +69,9 @@ image_build:
   script:
    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
    - docker push $IMAGE_NAME:$IMAGE_TAG
-#  rules:
-#    - if: '$CI_COMMIT_BRANCH != "main"'
-#      when: always
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "main"'
+      when: always
 
 
 # -------------------
@@ -96,7 +96,7 @@ deploy-dev:
     - git push origin main
     - cd ../..
     - kubectl apply -f $K8S_MANIFEST_PATH
-#  rules:
-#    - if: '$CI_COMMIT_BRANCH != "main"'
-#      when: always
+  rules:
+    - if: '$CI_COMMIT_BRANCH != "main"'
+      when: always
 
