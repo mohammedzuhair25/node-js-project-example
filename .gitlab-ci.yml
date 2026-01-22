@@ -1,0 +1,69 @@
+stages:
+  - build
+  - test
+  - image_build
+  - deploy
+
+variables:
+  NODE_IMAGE: node:18-alpine
+  IMAGE_NAME: mzm1/node-swagger-metrics
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  # Optional: for docker login if private registry
+
+
+default:
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths: 
+        - node-modules/
+
+# -------------------
+# Install dependencies
+# -------------------
+build:
+  stage: build
+  image: $NODE_IMAGE
+  script:
+    - echo "Installing dependencies..."
+    - npm install --production
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+# -------------------
+# Run tests
+# -------------------
+test:
+  stage: test
+  image: $NODE_IMAGE
+  dependencies:
+    - build
+  script:
+    - echo "Running tests..."
+
+
+# -------------------
+# Build Docker image
+# -------------------
+image_build:
+  stage: image_build
+  image: docker:24.0.5
+  dependencies:
+    - build
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$USER_DOCKER" --password-stdin
+  script:
+   - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+   - docker push $IMAGE_NAME:$IMAGE_TAG
+
+# -------------------
+# Deploy
+# -------------------
+deploy:
+  stage: deploy
+  image: alpine:latest
+  dependencies:
+    - image_build
+  script:
+    - echo "Deploying app..."
