@@ -93,6 +93,8 @@ deploy-dev:
     - yq -i ".spec.template.spec.containers[0].image = \"$IMAGE_NAME:$IMAGE_TAG\"" $K8S_MANIFEST_PATH/node-app-deployment.yml
     - cd $K8S_MANIFEST_PATH
     - git add node-app-deployment.yml
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "ci@gitlab.com"
     - git commit -m "Update image to $IMAGE_TAG from $CI_COMMIT_REF_NAME"
     - git push origin main
     - kubectl apply -f *.yml
