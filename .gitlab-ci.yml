@@ -13,6 +13,7 @@ variables:
   IMAGE_NAME: mzm1/node-swagger-metrics
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
   DOCKER_DRIVER: overlay2
+  K8S_MANIFEST_PATH: node-app-k8s-manifest-dev
 
 
 default:
@@ -78,11 +79,25 @@ image_build:
 # -------------------
 deploy-dev:
   stage: deploy_dev
-  image: alpine:latest
   dependencies:
     - image_build
+  image: alpine:latest
+  tags:
+    - k8s
+  before_script:
+    - apk add --no-cache git yq openssh
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "ci@gitlab.com"
   script:
-    - echo "Deploying app..."
+    - git clone http://oauth2:$GITLAB_TOKEN@192.168.0.115/mohammed.zuhair/node-app-k8s
+    - cd $K8S_MANIFEST_PATH
+    - yq -i ".spec.template.spec.containers[0].image = \"$IMAGE_NAME:$IMAGE_TAG\"" $K8S_MANIFEST_PATH/node-app-deployment.yml
+    - git add $K8S_MANIFEST_PATH/node-app-deployment.yml
+    - git commit -m "Update image to $IMAGE_TAG from $CI_COMMIT_REF_NAME"
+    - git push origin main
 #  rules:
 #    - if: '$CI_COMMIT_BRANCH != "main"'
 #      when: always
