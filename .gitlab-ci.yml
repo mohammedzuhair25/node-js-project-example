@@ -90,11 +90,13 @@ deploy-dev:
    - echo "hi"
   script:
     - git clone http://oauth2:$GITLAB_TOKEN@192.168.0.115/mohammed.zuhair/node-app-k8s
+    - ls -l
     - cd $K8S_MANIFEST_PATH
     - yq -i ".spec.template.spec.containers[0].image = \"$IMAGE_NAME:$IMAGE_TAG\"" $K8S_MANIFEST_PATH/node-app-deployment.yml
     - git add $K8S_MANIFEST_PATH/node-app-deployment.yml
     - git commit -m "Update image to $IMAGE_TAG from $CI_COMMIT_REF_NAME"
     - git push origin main
+    - kubectl apply -f $K8S_MANIFEST_PATH
 #  rules:
 #    - if: '$CI_COMMIT_BRANCH != "main"'
 #      when: always
