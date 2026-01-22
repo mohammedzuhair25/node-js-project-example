@@ -97,7 +97,8 @@ deploy-dev:
     - git config --local user.email "ci@gitlab.com"
     - git commit -m "Update image to $IMAGE_TAG from $CI_COMMIT_REF_NAME"
     - git push origin main
-    - kubectl apply -f *.yml
+    - cd ../..
+    - kubectl apply -f $K8S_MANIFEST_PATH
 #  rules:
 #    - if: '$CI_COMMIT_BRANCH != "main"'
 #      when: always
