@@ -8,6 +8,7 @@ variables:
   NODE_IMAGE: node:18-alpine
   IMAGE_NAME: mzm1/node-swagger-metrics
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  DOCKER_DRIVER: overlay2
 
 
 default:
@@ -47,7 +48,7 @@ test:
 # -------------------
 image_build:
   stage: image_build
-  image: docker:24.0.5
+  image: docker
   dependencies:
     - build
   before_script:
