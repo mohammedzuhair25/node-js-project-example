@@ -85,9 +85,6 @@ deploy-dev:
   tags:
     - k8s
   before_script:
-    - mkdir -p ~/.ssh
-    - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
     - git config --global user.name "GitLab CI"
     - git config --global user.email "ci@gitlab.com"
   script:
