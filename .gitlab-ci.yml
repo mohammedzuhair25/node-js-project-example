@@ -85,8 +85,8 @@ deploy-dev:
   tags:
     - k8s
   before_script:
-    - git config --global user.name "GitLab CI"
-    - git config --global user.email "ci@gitlab.com"
+    - git config user.name "GitLab CI"
+    - git config user.email "ci@gitlab.com"
   script:
     - git clone http://oauth2:$GITLAB_TOKEN@192.168.0.115/mohammed.zuhair/node-app-k8s
     - cd $K8S_MANIFEST_PATH
