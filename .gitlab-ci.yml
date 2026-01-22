@@ -2,13 +2,12 @@ stages:
   - build
   - test
   - image_build
-  - deploy
+  - deploy_dev
 
 variables:
   NODE_IMAGE: node:18-alpine
   IMAGE_NAME: mzm1/node-swagger-metrics
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
-  # Optional: for docker login if private registry
 
 
 default:
@@ -52,7 +51,7 @@ image_build:
   dependencies:
     - build
   before_script:
-    - echo "$DOCKER_PASSWORD" | docker login -u "$USER_DOCKER" --password-stdin
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
   script:
    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
    - docker push $IMAGE_NAME:$IMAGE_TAG
@@ -61,7 +60,7 @@ image_build:
 # Deploy
 # -------------------
 deploy:
-  stage: deploy
+  stage: deploy_dev
   image: alpine:latest
   dependencies:
     - image_build
