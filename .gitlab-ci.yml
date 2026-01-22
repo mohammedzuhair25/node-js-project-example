@@ -81,11 +81,10 @@ deploy-dev:
   stage: deploy_dev
   dependencies:
     - image_build
-  image: alpine:latest
+  image: bitnami/kubectl:latest
   tags:
     - k8s
   before_script:
-    - apk add --no-cache git yq openssh
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
