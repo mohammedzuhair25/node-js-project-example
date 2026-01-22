@@ -13,7 +13,7 @@ variables:
   IMAGE_NAME: mzm1/node-swagger-metrics
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
   DOCKER_DRIVER: overlay2
-  K8S_MANIFEST_PATH: node-app-k8s-manifest-dev
+  K8S_MANIFEST_PATH: node-app-k8s/node-app-k8s-manifest-dev
 
 
 default:
