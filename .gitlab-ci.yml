@@ -84,10 +84,6 @@ deploy-dev:
   image: bitnami/kubectl:latest
   tags:
     - k8s
-  before_script:
-  #  - git config user.name "GitLab CI"
-  #  - git config user.email "ci@gitlab.com"
-   - echo "hi"
   script:
     - git clone http://oauth2:$GITLAB_TOKEN@192.168.0.115/mohammed.zuhair/node-app-k8s
     - yq -i ".spec.template.spec.containers[0].image = \"$IMAGE_NAME:$IMAGE_TAG\"" $K8S_MANIFEST_PATH/node-app-deployment.yml
