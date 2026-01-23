@@ -38,10 +38,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  * 2. Prometheus setup
  * ------------------------------------------------ */
 
-// Prefix default Node.js metrics
-client.collectDefaultMetrics({ prefix: 'myapp_' });
-
 const HTTP_APP_LABEL = 'node-swagger-metrics';
+
+// Default Node.js metrics
+client.collectDefaultMetrics({ prefix: 'myapp_' });
 
 // Total requests
 const httpRequestCounter = new client.Counter({
@@ -74,12 +74,19 @@ const httpResponseSize = new client.Histogram({
   buckets: [100, 500, 1000, 5000, 10000, 50000],
 });
 
-// ✅ SUCCESS metric (2xx only)
+// ✅ SUCCESS metric (2xx only) — FIXED
 const httpRequestSuccessCounter = new client.Counter({
   name: 'myapp_http_requests_success_total',
   help: 'Total number of successful HTTP requests (2xx)',
   labelNames: ['method', 'route', 'app'],
 });
+
+// 🔍 sanity log (optional but useful)
+console.log(
+  client.register.getSingleMetric('myapp_http_requests_success_total')
+    ? '✅ success metric registered'
+    : '❌ success metric NOT registered'
+);
 
 /* ------------------------------------------------
  * 3. Metrics middleware
@@ -88,7 +95,6 @@ const httpRequestSuccessCounter = new client.Counter({
 app.use(express.json());
 
 app.use((req, res, next) => {
-  // Do not observe Prometheus scraping itself
   if (req.path === '/metrics') {
     return next();
   }
@@ -101,7 +107,7 @@ app.use((req, res, next) => {
     ? parseInt(req.headers['content-length'], 10)
     : 0;
 
-  // Accurate response size tracking
+  // Response size tracking
   let responseBytes = 0;
   const originalWrite = res.write;
   const originalEnd = res.end;
@@ -117,33 +123,34 @@ app.use((req, res, next) => {
   };
 
   onFinished(res, () => {
-    const [seconds, nanoseconds] = process.hrtime(start);
-    const duration = seconds + nanoseconds / 1e9;
+    const [sec, nano] = process.hrtime(start);
+    const duration = sec + nano / 1e9;
     const statusCode = res.statusCode;
 
     // Safe route label
-    const route =
-      res.req.route?.path
-        ? res.req.baseUrl + res.req.route.path
-        : req.path;
+    const route = res.req.route?.path
+      ? res.req.baseUrl + res.req.route.path
+      : req.path;
 
-    const commonLabels = {
+    const labels = {
       method,
       route,
       status_code: statusCode,
       app: HTTP_APP_LABEL,
     };
 
-    httpRequestCounter.labels(commonLabels).inc();
-    httpRequestDuration.labels(commonLabels).observe(duration);
-    httpRequestSize.labels(commonLabels).observe(reqSize);
-    httpResponseSize.labels(commonLabels).observe(responseBytes);
+    httpRequestCounter.inc(labels);
+    httpRequestDuration.observe(labels, duration);
+    httpRequestSize.observe(labels, reqSize);
+    httpResponseSize.observe(labels, responseBytes);
 
-    // ✅ Success metric
+    // ✅ SUCCESS metric — FIXED (object-based labels)
     if (statusCode >= 200 && statusCode < 300) {
-      httpRequestSuccessCounter
-        .labels(method, route, HTTP_APP_LABEL)
-        .inc();
+      httpRequestSuccessCounter.inc({
+        method,
+        route,
+        app: HTTP_APP_LABEL,
+      });
     }
   });
 
@@ -200,8 +207,7 @@ app.get('/metrics', async (req, res) => {
  * ------------------------------------------------ */
 
 app.listen(port, () => {
-  console.log(`Server running at http://127.0.0.1:${port}`);
-  console.log(`Swagger docs: http://127.0.0.1:${port}/api-docs`);
-  console.log(`Prometheus metrics: http://127.0.0.1:${port}/metrics`);
+  console.log(`🚀 Server running at http://127.0.0.1:${port}`);
+  console.log(`📚 Swagger docs: http://127.0.0.1:${port}/api-docs`);
+  console.log(`📊 Prometheus metrics: http://127.0.0.1:${port}/metrics`);
 });
-
