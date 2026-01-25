@@ -1,15 +1,23 @@
 {
-  "name": "node-swagger-metrics",
+  "name": "node-swagger-prom-metrics",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.mjs",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "test": "cross-env NODE_ENV=test jest"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "swagger-ui-express": "^4.6.3",
+    "express": "^4.19.2",
     "swagger-jsdoc": "^6.2.8",
-    "prom-client": "^15.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "prom-client": "^15.1.0",
+    "on-finished": "^2.4.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "babel-jest": "^29.7.0",
+    "@babel/preset-env": "^7.22.20",
+    "supertest": "^6.3.4",
+    "cross-env": "^7.0.3"
   }
 }
