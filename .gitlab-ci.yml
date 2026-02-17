@@ -22,9 +22,9 @@ default:
     paths: 
         - node-modules/
 
-# -------------------
-# Install dependencies
-# -------------------
+# ---------------------
+# Install dependencies 
+# ---------------------
 build:
   stage: build
   image: $NODE_IMAGE
@@ -40,9 +40,9 @@ build:
       when: always
 
 
-# -------------------
+# -------------
 # Run tests
-# -------------------
+# -------------
 test:
   stage: test
   image: $NODE_IMAGE
@@ -87,7 +87,7 @@ deploy-dev:
     - k8s
     
   script:
-    - git clone http://oauth2:$GITLAB_TOKEN@192.168.0.115/mohammed.zuhair/node-app-k8s
+    - git clone http://oauth2:$GITLAB_TOKEN@192.168.68.111/mohammed.zuhair/node-app-k8s
     - yq -i ".spec.template.spec.containers[0].image = \"$IMAGE_NAME:$IMAGE_TAG\"" $K8S_MANIFEST_PATH/node-app-deployment.yml
     - cd $K8S_MANIFEST_PATH
     - git add node-app-deployment.yml
