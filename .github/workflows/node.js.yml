@@ -77,7 +77,8 @@ jobs:
 
       - name: Clone target repo
         run: |
-          git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
       - name: Update Deployment manifest
         run: |
