@@ -46,7 +46,7 @@ jobs:
   build-image:
     needs: build
     env:
-       Docker-image: mzm1/node-swagger-metrics:${{ github.sha }}
+       Dockerimage: mzm1/node-swagger-metrics:${{ github.sha }}
     runs-on: ubuntu-latest
     steps:
 
@@ -62,7 +62,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build Docker image
-      run: docker build -t $Docker-image .
+      run: docker build -t $Dockerimage .
 
     - name: Push image
-      run: docker push $Docker-image
+      run: docker push $Dockerimage
