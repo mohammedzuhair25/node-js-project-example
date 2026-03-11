@@ -81,10 +81,7 @@ jobs:
 
       - name: Update Deployment manifest
         run: |
-          ls -ltr
-          cd node-js-example-k8s/node-app-k8s-manifest-dev
-          ls -ltr
-          sed -i "s|image: mzm1/node-swagger-metrics:.*|image: mzm1/node-swagger-metrics:${{ github.sha }}|g" node-app-deployment.yaml
+          sed -i "s|image: mzm1/node-swagger-metrics:.*|image: mzm1/node-swagger-metrics:${{ github.sha }}|g" node-js-example-k8s/node-app-k8s-manifest-dev/node-app-deployment.yaml
       - name: Commit and push
         run: |
           cd node-js-example-k8s
