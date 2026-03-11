@@ -66,3 +66,27 @@ jobs:
 
     - name: Push image
       run: docker push $Dockerimage
+
+  update-repo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout node js k8s manifest repo
+        uses: actions/checkout@v4
+
+      - name: Clone target repo
+        run: |
+          git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+
+      - name: Update Deployment manifest
+        run: |
+          cd node-js-example-k8s/node-app-k8s-manifest-dev
+          sed -i "s|image: mzm1/node-swagger-metrics:.*|image: mzm1/node-swagger-metrics:${{ github.sha }}|g" node-app-deployment.yaml
+      - name: Commit and push
+        run: |
+          cd node-js-example-k8s
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image with latest tag ${{ github.sha }}"
+          git push
