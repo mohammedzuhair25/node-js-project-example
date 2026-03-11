@@ -45,10 +45,11 @@ jobs:
 
   build-image:
     needs: build
-
+    env:
+       Docker-image: mzm1/node-swagger-metrics:${{ github.sha }}
     runs-on: ubuntu-latest
     steps:
-  
+
     - name : Download source code artifact
       uses: actions/download-artifact@v4
       with:
@@ -61,7 +62,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build Docker image
-      run: docker build -t mzm1/node-swagger-metrics:${{ github.sha }} .
+      run: docker build -t $Docker-image:${{ github.sha }} .
 
     - name: Push image
-      run: docker push mzm1/node-swagger-metrics:${{ github.sha }}
+      run: docker push $Docker-image:${{ github.sha }}
