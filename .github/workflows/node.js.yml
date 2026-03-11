@@ -30,7 +30,9 @@ jobs:
       run: |
         npm install --production
     - name: Run tests
-      run: npm test
+      run: |
+        npm ci --only=if-present
+        npm test
 
 
     - name: Login to DockerHub
