@@ -67,7 +67,8 @@ jobs:
     - name: Push image
       run: docker push $Dockerimage
 
-  update-repo:
+  update-k8s-repo:
+    needs: build-image
     runs-on: ubuntu-latest
 
     steps:
