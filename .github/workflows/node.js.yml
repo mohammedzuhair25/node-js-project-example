@@ -35,6 +35,7 @@ jobs:
         npm test
 
   build-image:
+    needs: build
 
     runs-on: ubuntu-latest
     steps:
