@@ -69,6 +69,9 @@ jobs:
       run: docker push $Dockerimage
 
   update-k8s-repo:
+    concurrency: 
+      group: update-k8s-repo
+      cancel-in-progress: true
     needs: build-image
     runs-on: ubuntu-latest
 
