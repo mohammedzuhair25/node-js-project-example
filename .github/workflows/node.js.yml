@@ -75,6 +75,14 @@ jobs:
     - name: Push image
       run: docker push $Dockerimage
 
+    - name: Scan image for vulnerabilities
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+          image-ref: $Dockerimage
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+
   update-k8s-repo:
     if: github.ref == 'refs/heads/main'
     concurrency: 
