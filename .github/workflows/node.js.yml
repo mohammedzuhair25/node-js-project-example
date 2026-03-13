@@ -78,7 +78,7 @@ jobs:
     - name: Scan image for vulnerabilities
       uses: aquasecurity/trivy-action@0.20.0
       with:
-          image-ref: $Dockerimage
+          image-ref: mzm1/node-swagger-metrics:${{ github.sha }}
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH
