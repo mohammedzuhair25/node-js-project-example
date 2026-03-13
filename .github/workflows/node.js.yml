@@ -85,14 +85,14 @@ jobs:
       with:
           image-ref: mzm1/node-swagger-metrics:${{ github.sha }}
           format: table
-          exit-code: 0
+          exit-code: 1
           severity: CRITICAL,HIGH
   update-k8s-repo:
     if: github.ref == 'refs/heads/main'
     concurrency: 
       group: update-k8s-repo
       cancel-in-progress: true
-    needs: build-image
+    needs: Scan_image_for_vulnerabilities
     runs-on: ubuntu-latest
 
     steps:

@@ -1,5 +1,7 @@
 # Dockerfile.dev
-FROM node:18-alpine
+FROM node:20-alpine
+
+RUN apk update && apk upgrade --no-cache
 
 # Create app directory
 WORKDIR /usr/src/app
