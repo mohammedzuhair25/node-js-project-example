@@ -9,7 +9,7 @@ WORKDIR /usr/src/app
 # Install dependencies first (better layer caching)
 COPY package*.json ./
 
-RUN npm install --production
+RUN npm ci --omit=dev
 
 # Copy app source
 COPY server.mjs .
