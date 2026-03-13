@@ -35,7 +35,7 @@ jobs:
         cache: 'npm'
     - name: Install dependencies, build
       run: |
-        RUN npm ci --omit=dev
+        npm ci --omit=dev
     - name: Run tests
       run: |
         npm ci --only=if-present
