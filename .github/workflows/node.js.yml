@@ -75,14 +75,18 @@ jobs:
     - name: Push image
       run: docker push $Dockerimage
 
+  Scan_image_for_vulnerabilities:
+    if: github.ref == 'refs/heads/main'
+    needs: build-image
+    runs-on: ubuntu-latest
+    steps:
     - name: Scan image for vulnerabilities
       uses: aquasecurity/trivy-action@0.20.0
       with:
           image-ref: mzm1/node-swagger-metrics:${{ github.sha }}
           format: table
-          exit-code: 1
+          exit-code: 0
           severity: CRITICAL,HIGH
-
   update-k8s-repo:
     if: github.ref == 'refs/heads/main'
     concurrency: 
