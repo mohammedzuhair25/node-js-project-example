@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-
+    if: github.ref == 'ref/heads/feature/*'
     runs-on: ubuntu-latest
 
     strategy:
