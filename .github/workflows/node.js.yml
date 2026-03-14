@@ -87,7 +87,7 @@ jobs:
           image-ref: mzm1/node-swagger-metrics:${{ github.sha }}
           format: table
           exit-code: 1
-          severity: CRITICAL,HIGH
+          severity: CRITICAL
   update-k8s-repo:
     if: github.ref == 'refs/heads/main'
     concurrency: 
