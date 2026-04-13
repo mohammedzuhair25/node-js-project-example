@@ -38,21 +38,23 @@ jobs:
         npm ci --omit=dev
         
   nodejs-test:
-     steps:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
      - name: Run tests
-      run: |
-        npm ci --only=if-present
-        npm test
+       run: |
+         npm ci --only=if-present
+         npm test
 
      - name : Upload source code as artifact    
        uses: actions/upload-artifact@v4
        with:
-        name: source-code
-        path: |
-         package.json
-         package-lock.json
-         server.mjs
-         Dockerfile
+          name: source-code
+          path: |
+           package.json
+           package-lock.json
+           server.mjs
+           Dockerfile
           
   build-image:
     if: github.ref == 'refs/heads/main'
