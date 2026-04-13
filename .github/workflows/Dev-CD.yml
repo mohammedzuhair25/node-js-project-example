@@ -1,0 +1,34 @@
+name: Node.js CD
+
+on:
+  workflow_call:
+    secrets:
+      GH_PAT:
+        required: true
+jobs:
+  Deploy-to-Dev:
+    runs-on: ubuntu-latest
+    concurrency: 
+      group: update-k8s-repo
+      cancel-in-progress: true
+    steps:
+      - name: Checkout node js k8s manifest repo
+        uses: actions/checkout@v4
+
+      - name: Clone target repo
+        run: |
+          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+
+      - name: Update Deployment manifest for Dev environment
+        run: |
+          cd node-js-example-k8s/k8s/helm-node-app
+          yq -i ".image.tag = \"mzm1/node-swagger-metrics:${{ github.sha }}\""  dev-vvalues-dev.yaml
+      - name: Commit and push
+        run: |
+          cd node-js-example-k8s
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image with latest tag ${{ github.sha }}"
+          git push

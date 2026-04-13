@@ -104,33 +104,3 @@ jobs:
           format: table
           exit-code: 1
           severity: CRITICAL
-  update-k8s-repo:
-    if: github.ref == 'refs/heads/main'
-    concurrency: 
-      group: update-k8s-repo
-      cancel-in-progress: true
-    needs: Scan_image_for_vulnerabilities
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout node js k8s manifest repo
-        uses: actions/checkout@v4
-
-      - name: Clone target repo
-        run: |
-          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
-           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
-
-      - name: Update Deployment manifest
-        run: |
-          cd node-js-example-k8s/node-app-k8s-manifest-dev
-          ls -ltr
-          yq -i ".spec.template.spec.containers[0].image = \"mzm1/node-swagger-metrics:${{ github.sha }}\"" node-app-deployment.yml
-      - name: Commit and push
-        run: |
-          cd node-js-example-k8s
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add .
-          git commit -m "Update image with latest tag ${{ github.sha }}"
-          git push

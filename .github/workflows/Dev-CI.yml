@@ -3,14 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - main
       - feature/**
-      - release/**
+      - develop/**
       - hotfix/**
-  pull_request:
-    branches:
-      - main
-      - release/**
   workflow_dispatch:
 
 jobs:
@@ -19,4 +14,10 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+
+  deploy:
+    needs: call-ci
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
+    secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
