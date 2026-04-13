@@ -11,7 +11,8 @@ on:
         required: true
       DOCKER_PASSWORD:
         required: true
-
+      GH_PAT:
+        required: true
 jobs:
   build:
     runs-on: ubuntu-latest
