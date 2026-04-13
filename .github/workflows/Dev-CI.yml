@@ -7,6 +7,9 @@ on:
       - feature/**
       - develop/**
       - hotfix/**
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
