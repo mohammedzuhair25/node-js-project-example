@@ -21,3 +21,4 @@ jobs:
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+    if: github.ref == 'refs/heads/main'
