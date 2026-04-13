@@ -58,7 +58,7 @@ jobs:
           
   build-image:
     if: github.ref == 'refs/heads/main'
-    needs: build
+    needs: nodejs-test
     env:
        Dockerimage: mzm1/node-swagger-metrics:${{ github.sha }}
     runs-on: ubuntu-latest
