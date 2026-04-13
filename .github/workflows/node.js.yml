@@ -3,18 +3,9 @@
 
 name: Node.js CI
 
+
 on:
-  push:
-    branches:
-      - main
-      - feature/**
-      - release/**
-      - hotfix/**
-  pull_request:
-    branches:
-      - main
-      - release/**
-  workflow_dispatch:
+  workflow_call:
 
 
 jobs:
