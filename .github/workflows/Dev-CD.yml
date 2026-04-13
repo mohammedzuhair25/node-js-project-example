@@ -7,6 +7,7 @@ on:
         required: true
 jobs:
   Deploy-to-Dev:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency: 
       group: update-k8s-repo
