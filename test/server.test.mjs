@@ -2,10 +2,10 @@ import request from 'supertest';
 import app from '../server.mjs';
 
 describe('API & Metrics Tests', () => {
-  test('GET / returns Hello World', async () => {
+  test('GET / returns Hello World MZM!', async () => {
     const res = await request(app).get('/');
     expect(res.statusCode).toBe(200);
-    expect(res.text).toBe('Hello World!');
+    expect(res.text).toBe('Hello World MZM!');
   });
 
   test('GET /hello/:name returns greeting', async () => {

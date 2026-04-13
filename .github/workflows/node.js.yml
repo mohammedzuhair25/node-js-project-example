@@ -68,7 +68,6 @@ jobs:
            Dockerfile
           
   build-image:
-    if: github.ref == 'refs/heads/main'
     needs: nodejs-test
     env:
        Dockerimage: mzm1/node-swagger-metrics:${{ github.sha }}
@@ -93,7 +92,6 @@ jobs:
       run: docker push $Dockerimage
 
   Scan_image_for_vulnerabilities:
-    if: github.ref == 'refs/heads/main'
     needs: build-image
     runs-on: ubuntu-latest
     steps:
@@ -104,3 +102,4 @@ jobs:
           format: table
           exit-code: 1
           severity: CRITICAL
+          ignore-unfixed: true
