@@ -43,13 +43,22 @@ jobs:
     steps:
      - name: Run tests
        run: |
-         npm ci --only=if-present
-         npm test
+         npm ci --omit=dev
+         npm test -- --coverage
 
+     - name: Run tests with JUnit output
+       run: npm test -- --reporters=default --reporters=jest-junit
+
+     - name: Upload test results
+       uses: actions/upload-artifact@v4
+       with:
+        name: test-results
+        path: junit.xml
+  
      - name : Upload source code as artifact    
        uses: actions/upload-artifact@v4
        with:
-          name: source-code
+          name: image-depedency
           path: |
            package.json
            package-lock.json
@@ -67,7 +76,7 @@ jobs:
     - name : Download source code artifact
       uses: actions/download-artifact@v4
       with:
-        name: source-code
+        name: image-depedency
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
