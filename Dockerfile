@@ -1,5 +1,5 @@
 # Dockerfile.dev
-FROM node:24-alpine
+FROM node:20-alpine
 
 RUN apk update && apk upgrade --no-cache
 
