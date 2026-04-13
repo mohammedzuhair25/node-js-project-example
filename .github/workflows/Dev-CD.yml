@@ -23,7 +23,7 @@ jobs:
       - name: Update Deployment manifest for Dev environment
         run: |
           cd node-js-example-k8s/k8s/helm-node-app
-          yq -i ".image.tag = \"mzm1/node-swagger-metrics:${{ github.sha }}\"" values-dev.yaml
+          yq -i ".image.tag = \"mzm1/node-swagger-metrics:${{ github.sha }}\""  dev-vvalues-dev.yaml
       - name: Commit and push
         run: |
           cd node-js-example-k8s
