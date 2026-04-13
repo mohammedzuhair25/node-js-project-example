@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+      - release/**
+      - hotfix/**
+  pull_request:
+    branches:
+      - main
+      - release/**
+  workflow_dispatch:
+
+jobs:
+  call-ci:
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/node.js.yml@main
