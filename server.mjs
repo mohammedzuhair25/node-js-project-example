@@ -97,7 +97,7 @@ app.use((req, res, next) => {
 });
 
 /* ---------------- API endpoints ---------------- */
-app.get('/', (req, res) => res.send('Hello World!'));
+app.get('/', (req, res) => res.send('Hello World MZM!'));
 app.get('/hello/:name', (req, res) => res.send(`Hello, ${req.params.name}!`));
 
 /* ---------------- Metrics endpoint ---------------- */
