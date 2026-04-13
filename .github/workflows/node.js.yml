@@ -36,20 +36,23 @@ jobs:
     - name: Install dependencies, build
       run: |
         npm ci --omit=dev
-    - name: Run tests
+        
+  nodejs-test:
+     steps:
+     - name: Run tests
       run: |
         npm ci --only=if-present
         npm test
 
-    - name : Upload source code as artifact    
-      uses: actions/upload-artifact@v4
-      with:
-       name: source-code
-       path: |
-        package.json
-        package-lock.json
-        server.mjs
-        Dockerfile
+     - name : Upload source code as artifact    
+       uses: actions/upload-artifact@v4
+       with:
+        name: source-code
+        path: |
+         package.json
+         package-lock.json
+         server.mjs
+         Dockerfile
           
   build-image:
     if: github.ref == 'refs/heads/main'
