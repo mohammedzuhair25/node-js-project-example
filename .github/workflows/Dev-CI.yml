@@ -14,7 +14,7 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   deploy:
     needs: call-ci
