@@ -16,3 +16,6 @@ on:
 jobs:
   call-ci:
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/node.js.yml@main
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
