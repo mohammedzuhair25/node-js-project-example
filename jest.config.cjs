@@ -1,8 +1,8 @@
-export default {
+module.exports = {
   testEnvironment: 'node',
-  transform: {
-    '^.+\\.m?js$': 'babel-jest'
-  },
+  transform: {},
   moduleFileExtensions: ['js', 'mjs'],
   testMatch: ['**/test/**/*.test.mjs'],
+  coverageProvider: 'v8',
+  collectCoverage: false,
 };

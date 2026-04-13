@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "NODE_ENV=test jest"
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "express": "^4.19.2",
