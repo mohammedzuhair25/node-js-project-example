@@ -32,3 +32,4 @@ jobs:
           git add .
           git commit -m "Update image with latest tag ${{ github.sha }}"
           git push
+    if: github.ref == 'refs/heads/main'
