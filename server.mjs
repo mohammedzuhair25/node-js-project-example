@@ -108,7 +108,7 @@ export function createApp({ db } = {}) {
 
   app.get('/', (req, res) => {
     res.json({
-      message: 'Hello World MZM!',
+      message: 'Hello World MZM and Yousif!',
       mysqlDatabase: resolvedDb.config.database,
       exampleTable: resolvedDb.config.table,
     });

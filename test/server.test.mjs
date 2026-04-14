@@ -21,7 +21,7 @@ describe('API, health, and MySQL tests', () => {
     const res = await request(app).get('/');
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.message).toBe('Hello World MZM!');
+    expect(res.body.message).toBe('Hello World MZM and Yousif!');
     expect(res.body.mysqlDatabase).toBe('test_db');
     expect(res.body.exampleTable).toBe('example');
   });
