@@ -9,10 +9,10 @@ WORKDIR /usr/src/app
 # Install dependencies first (better layer caching)
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy app source
-COPY server.mjs .
+COPY server.mjs db.mjs ./
 
 # Use a non-root user (optional but recommended) - adjust as needed for your app's permissions
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
