@@ -28,7 +28,7 @@ jobs:
         cache: 'npm'
     - name: Install dependencies, build
       run: |
-        npm ci
+        npm install
         
   nodejs-test:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
          node-version: 24.x
      - name: Run tests
        run: |
-         npm ci
+         npm install
          npm test -- --coverage
 
      - name: Run tests with JUnit output
@@ -62,6 +62,7 @@ jobs:
            package.json
            package-lock.json
            server.mjs
+           db.mjs
            Dockerfile
           
   build-image:
