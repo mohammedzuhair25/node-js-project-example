@@ -14,6 +14,22 @@ describe('API & Metrics Tests', () => {
     expect(res.text).toBe('Hello, Mohammed!');
   });
 
+  test('GET /livez returns liveness status', async () => {
+    const res = await request(app).get('/livez');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe('alive');
+    expect(typeof res.body.uptime).toBe('number');
+    expect(res.body.timestamp).toBeDefined();
+  });
+
+  test('GET /readyz returns readiness status', async () => {
+    const res = await request(app).get('/readyz');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.status).toBe('ready');
+    expect(res.body.startedAt).toBeDefined();
+    expect(res.body.timestamp).toBeDefined();
+  });
+
   test('GET /metrics exposes Prometheus metrics', async () => {
     const res = await request(app).get('/metrics');
     expect(res.statusCode).toBe(200);
