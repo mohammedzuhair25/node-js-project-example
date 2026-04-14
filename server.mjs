@@ -45,8 +45,9 @@ const httpRequestSuccessCounter = new client.Counter({
   labelNames: ['method', 'route', 'app'],
 });
 
-export function createApp({ db = createMySqlService() } = {}) {
+export function createApp({ db } = {}) {
   const app = express();
+  const resolvedDb = db ?? createMySqlService();
 
   const swaggerOptions = {
     definition: {
@@ -60,7 +61,7 @@ export function createApp({ db = createMySqlService() } = {}) {
     apis: ['./server.mjs'],
   };
 
-  app.locals.db = db;
+  app.locals.db = resolvedDb;
 
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
   app.use(express.json());
@@ -108,8 +109,8 @@ export function createApp({ db = createMySqlService() } = {}) {
   app.get('/', (req, res) => {
     res.json({
       message: 'Hello World MZM!',
-      mysqlDatabase: db.config.database,
-      exampleTable: db.config.table,
+      mysqlDatabase: resolvedDb.config.database,
+      exampleTable: resolvedDb.config.table,
     });
   });
 
@@ -124,13 +125,13 @@ export function createApp({ db = createMySqlService() } = {}) {
   );
 
   app.get('/readyz', async (req, res) => {
-    const ready = await db.checkReadiness();
+    const ready = await resolvedDb.checkReadiness();
 
     res.status(ready ? 200 : 503).json({
       status: ready ? 'ready' : 'not_ready',
       startedAt,
       timestamp: new Date().toISOString(),
-      mysqlDatabase: db.config.database,
+      mysqlDatabase: resolvedDb.config.database,
     });
   });
 
@@ -142,14 +143,14 @@ export function createApp({ db = createMySqlService() } = {}) {
         return res.status(400).json({ message: 'Query parameter "id" must be an integer.' });
       }
 
-      const record = await db.queryExampleRecord(id);
+      const record = await resolvedDb.queryExampleRecord(id);
 
       if (!record) {
-        return res.status(404).json({ message: `No record found in table "${db.config.table}".` });
+        return res.status(404).json({ message: `No record found in table "${resolvedDb.config.table}".` });
       }
 
       return res.status(200).json({
-        table: db.config.table,
+        table: resolvedDb.config.table,
         record,
       });
     } catch (error) {
@@ -176,7 +177,7 @@ export function createApp({ db = createMySqlService() } = {}) {
   return app;
 }
 
-const app = createApp();
+const app = process.env.NODE_ENV === 'test' ? express() : createApp();
 
 if (process.env.NODE_ENV !== 'test') {
   const server = app.listen(port, () => {
