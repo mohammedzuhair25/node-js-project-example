@@ -6,6 +6,8 @@ import onFinished from 'on-finished';
 
 const app = express();
 const port = 3000;
+const startedAt = new Date().toISOString();
+let isReady = true;
 
 /* ----------------- Swagger setup ----------------- */
 const swaggerOptions = {
@@ -99,6 +101,20 @@ app.use((req, res, next) => {
 /* ---------------- API endpoints ---------------- */
 app.get('/', (req, res) => res.send('Hello World MZM!'));
 app.get('/hello/:name', (req, res) => res.send(`Hello, ${req.params.name}!`));
+app.get('/livez', (req, res) =>
+  res.status(200).json({
+    status: 'alive',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  }),
+);
+app.get('/readyz', (req, res) =>
+  res.status(isReady ? 200 : 503).json({
+    status: isReady ? 'ready' : 'not_ready',
+    startedAt,
+    timestamp: new Date().toISOString(),
+  }),
+);
 
 /* ---------------- Metrics endpoint ---------------- */
 app.get('/metrics', async (req, res) => {
