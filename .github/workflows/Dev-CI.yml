@@ -23,19 +23,6 @@ jobs:
   deploy-dev:
     needs: ci
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
-    with:
-      environment_name: dev
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-    environment:
-      name: dev
 
-  deploy-staging:
-    needs: deploy-dev
-    uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
-    with:
-      environment_name: staging
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
-    environment:
-      name: staging
