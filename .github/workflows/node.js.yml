@@ -3,10 +3,6 @@ name: Node.js CI
 
 on:
   workflow_call:
-    inputs:
-      environment:
-        required: true
-        type: string
     secrets:
       DOCKER_USERNAME:
         required: true
@@ -17,8 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: dev
+
     strategy:
       matrix:
         node-version: [24.x]
@@ -37,8 +32,7 @@ jobs:
         
   nodejs-test:
     runs-on: ubuntu-latest
-    environment:
-      name: dev   
+   
     needs: build
     steps:
      - uses: actions/checkout@v4
@@ -100,8 +94,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: build-image
     runs-on: ubuntu-latest
-    environment:
-      name: dev
     steps:
     - name: Scan image for vulnerabilities
       uses: aquasecurity/trivy-action@v0.35.0

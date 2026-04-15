@@ -19,10 +19,15 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       GH_PAT: ${{ secrets.GH_PAT }}
+   
 
   deploy-dev:
     needs: ci
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
-
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+  deploy-staging:
+    needs: ci
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}

@@ -11,6 +11,8 @@ on:
         required: true
 jobs:
   Deploy-to-Dev:
+    environment:
+      name: dev
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency: 
@@ -38,3 +40,34 @@ jobs:
           git commit -m "Update image with latest tag ${{ github.sha }}"
           git push origin main
 
+
+
+  Deploy-to-staging:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    concurrency: 
+      group: update-k8s-repo
+      cancel-in-progress: true
+    steps:
+      - name: Checkout node js k8s manifest repo
+        uses: actions/checkout@v4
+
+      - name: Clone target repo
+        run: |
+          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+
+      - name: Update Deployment manifest for Destaging staging environment
+        run: |
+          cd node-js-example-k8s/k8s/helm-node-app
+          yq -i ".image.tag = \"${{ github.sha }}\"" values-staging.yaml
+      - name: Commit and push
+        run: |
+          cd node-js-example-k8s
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image with latest tag ${{ github.sha }}"
+          git push origin main
