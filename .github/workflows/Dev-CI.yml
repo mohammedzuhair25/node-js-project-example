@@ -1,11 +1,11 @@
-name: CI
+name: CI-CD Pipeline
 
 on:
   push:
     branches:
       - main
+      - develop
       - feature/**
-      - develop/**
       - hotfix/**
   pull_request:
     branches:
@@ -13,15 +13,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  call-ci:
+  ci:
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/node.js.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       GH_PAT: ${{ secrets.GH_PAT }}
 
-  deploy:
-    needs: call-ci
+  deploy-dev:
+    needs: ci
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
+    with:
+      environment_name: dev
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+    environment:
+      name: dev
+
+  deploy-staging:
+    needs: deploy-dev
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
+    with:
+      environment_name: staging
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+    environment:
+      name: staging
