@@ -2,6 +2,10 @@ name: Node.js CD
 
 on:
   workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
     secrets:
       GH_PAT:
         required: true
