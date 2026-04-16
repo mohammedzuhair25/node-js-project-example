@@ -152,3 +152,4 @@ For zero-downtime rotation:
 2. Kubernetes updates the mounted files
 3. App reads fresh values on next connection attempt
 4. No pod restart needed (if handled gracefully in your code)
+# test2
