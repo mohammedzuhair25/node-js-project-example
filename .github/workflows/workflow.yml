@@ -23,7 +23,7 @@ jobs:
 
 
   ci:
-    uses: mohammedzuhair25/node-js-project-example/.github/workflows/node.js.yml@main
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/CI.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -32,7 +32,7 @@ jobs:
 
   deploy-enviornment:
     needs: [db-migration, ci]
-    uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/CD.yml@main
     with:
       environment: dev
     secrets:
