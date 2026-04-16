@@ -84,11 +84,15 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build Docker image
-      run: docker build -t $Dockerimage --no-cache .
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - name: Push image
-      run: docker push $Dockerimage
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+       context: .
+       push: true  # or true if pushing to registry
+       tags: $Dockerimage
 
   Scan_image_for_vulnerabilities:
     if: github.ref == 'refs/heads/main'
