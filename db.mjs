@@ -1,24 +1,15 @@
 import mysql from 'mysql2/promise';
-
-function requireEnv(name) {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
-}
+import { requireSecret, getSecret } from './secrets.mjs';
 
 function readConfig() {
   return {
-    host: requireEnv('MYSQL_HOST'),
-    port: Number.parseInt(process.env.MYSQL_PORT ?? '3306', 10),
-    user: requireEnv('MYSQL_USER'),
-    password: requireEnv('MYSQL_PASSWORD'),
-    database: requireEnv('MYSQL_DATABASE'),
-    table: process.env.MYSQL_EXAMPLE_TABLE ?? 'example',
-    connectionLimit: Number.parseInt(process.env.MYSQL_CONNECTION_LIMIT ?? '10', 10),
+    host: requireSecret('MYSQL_HOST', 'mysql-host'),
+    port: Number.parseInt(getSecret('MYSQL_PORT', 'mysql-port', '3306'), 10),
+    user: requireSecret('MYSQL_USER', 'mysql-user'),
+    password: requireSecret('MYSQL_PASSWORD', 'mysql-password'),
+    database: requireSecret('MYSQL_DATABASE', 'mysql-database'),
+    table: getSecret('MYSQL_EXAMPLE_TABLE', 'mysql-table', 'example'),
+    connectionLimit: Number.parseInt(getSecret('MYSQL_CONNECTION_LIMIT', 'mysql-connection-limit', '10'), 10),
   };
 }
 
