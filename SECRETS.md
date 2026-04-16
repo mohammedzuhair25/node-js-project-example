@@ -11,6 +11,8 @@ Your application has three ways to get configuration values, checked in this ord
    MYSQL_HOST=localhost node server.mjs
    ```
 
+test
+
 2. **Mounted Secret Files** (for Kubernetes)
    - Secrets mounted at `/etc/secrets/` by default
    - File names: `mysql-host`, `mysql-user`, `mysql-password`, etc.
