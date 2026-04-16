@@ -12,7 +12,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 
 # Copy app source
-COPY server.mjs db.mjs ./
+COPY server.mjs db.mjs secrets.mjs ./
 
 # Use a non-root user (optional but recommended) - adjust as needed for your app's permissions
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
