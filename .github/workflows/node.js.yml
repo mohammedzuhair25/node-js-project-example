@@ -61,10 +61,7 @@ jobs:
           path: |
            package.json
            package-lock.json
-           server.mjs
-           db.mjs
-           Dockerfile
-           secrets.mjs
+           *.mjs
           
   build-image:
     if: github.ref == 'refs/heads/main'
