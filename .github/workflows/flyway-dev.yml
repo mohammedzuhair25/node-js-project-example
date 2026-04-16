@@ -28,5 +28,5 @@ jobs:
 
       - name: Build & Push Flyway Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:dev-${{ github.sha }} ./flyway
-          docker push ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:dev-${{ github.sha }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:staging-${{ github.sha }} ./flyway
+          docker push ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:staging-${{ github.sha }}
