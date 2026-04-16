@@ -13,14 +13,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  db-migration:
-    if: github.ref == 'refs/heads/feature/db-migration' || github.ref == 'refs/heads/hotfix/db-migration'
+
+  db-migration-staging:
+    if: github.ref == 'refs/heads/feature/db-migration-staging' || github.ref == 'refs/heads/hotfix/db-migration-staging'
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/flyway-dev.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       GH_PAT: ${{ secrets.GH_PAT }}
-
 
   ci:
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/CI.yml@main
