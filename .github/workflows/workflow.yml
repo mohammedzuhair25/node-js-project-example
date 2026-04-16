@@ -1,0 +1,39 @@
+name: CI-CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+      - hotfix/**
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  db-migration:
+    if: github.ref == 'refs/heads/feature/db-migration' || github.ref == 'refs/heads/hotfix/db-migration'
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/flyway-dev.yml@main
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+
+
+  ci:
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/node.js.yml@main
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+   
+
+  deploy-enviornment:
+    needs: [db-migration, ci]
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/Dev-CD.yml@main
+    with:
+      environment: dev
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
