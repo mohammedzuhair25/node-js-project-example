@@ -32,7 +32,6 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:staging-${{ github.sha }}
 
   Deploy-to-flyway-staging:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout node js k8s manifest repo
