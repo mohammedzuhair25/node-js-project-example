@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js Example Project - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.online {
+            background-color: #10b981;
+        }
+
+        .status-indicator.offline {
+            background-color: #ef4444;
+        }
+
+        .status-indicator.unknown {
+            background-color: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        .form-group {
+            margin: 20px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .response-box {
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 300px;
+            overflow-y: auto;
+            border-left: 4px solid #764ba2;
+        }
+
+        .response-box.error {
+            background: #fee;
+            border-left-color: #ef4444;
+        }
+
+        .response-box.success {
+            background: #efe;
+            border-left-color: #10b981;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .metrics-table th,
+        .metrics-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .metrics-table th {
+            background: #f0f4ff;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .metrics-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            opacity: 0.8;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .badge.secondary {
+            background: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-table {
+                font-size: 0.8em;
+            }
+
+            .metrics-table th,
+            .metrics-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Node.js Example Project</h1>
+            <p>Interactive Dashboard for Server API Testing</p>
+        </header>
+
+        <div class="grid">
+            <!-- Server Status Card -->
+            <div class="card">
+                <h2>📊 Server Status</h2>
+                <div id="liveness">
+                    <p><span class="status-indicator unknown"></span> <strong>Liveness:</strong> Checking...</p>
+                </div>
+                <div id="readiness" style="margin-top: 15px;">
+                    <p><span class="status-indicator unknown"></span> <strong>Readiness:</strong> Checking...</p>
+                </div>
+                <button onclick="checkStatus()" style="margin-top: 20px;">Refresh Status</button>
+            </div>
+
+            <!-- Home Endpoint Card -->
+            <div class="card">
+                <h2>👋 Home Endpoint</h2>
+                <p>Get basic server information and database details.</p>
+                <button onclick="callHome()">Get Home Info</button>
+                <div id="homeResponse" class="response-box" style="display:none;"></div>
+                <div id="homeLoading" class="loading">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+
+            <!-- Hello Endpoint Card -->
+            <div class="card">
+                <h2>💬 Hello Endpoint</h2>
+                <p>Personalized greeting message.</p>
+                <div class="form-group">
+                    <label for="nameInput">Enter a name:</label>
+                    <input type="text" id="nameInput" placeholder="e.g., World" value="World">
+                </div>
+                <button onclick="callHello()">Send Greeting</button>
+                <div id="helloResponse" class="response-box" style="display:none;"></div>
+                <div id="helloLoading" class="loading">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+
+            <!-- Example Record Card -->
+            <div class="card">
+                <h2>📋 Example Record</h2>
+                <p>Query records from the example table.</p>
+                <div class="form-group">
+                    <label for="recordId">Record ID (optional):</label>
+                    <input type="number" id="recordId" placeholder="Leave empty for first record" min="0">
+                </div>
+                <button onclick="callExampleRecord()">Get Record</button>
+                <div id="recordResponse" class="response-box" style="display:none;"></div>
+                <div id="recordLoading" class="loading">
+                    <span class="spinner"></span> Loading...
+                </div>
+            </div>
+
+            <!-- Metrics Card -->
+            <div class="card">
+                <h2>📈 Prometheus Metrics</h2>
+                <p>View application performance and request metrics.</p>
+                <button onclick="viewMetrics()">View Metrics</button>
+                <div id="metricsInfo" style="display:none; margin-top: 15px;">
+                    <div class="info-box">
+                        <strong>Note:</strong> This will open the /metrics endpoint in a new tab with Prometheus format data.
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Documentation Card -->
+            <div class="card">
+                <h2>📚 API Documentation</h2>
+                <p>View interactive API documentation with Swagger/OpenAPI.</p>
+                <button onclick="openApiDocs()">Open Swagger Docs</button>
+                <div id="docsInfo" style="display:none; margin-top: 15px;">
+                    <div class="info-box">
+                        <strong>Note:</strong> This will open the /api-docs endpoint in a new tab.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Summary Card (Full Width) -->
+            <div class="card full-width">
+                <h2>🔍 API Endpoints Overview</h2>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge">GET</span></td>
+                            <td>/</td>
+                            <td>Home endpoint with server info</td>
+                            <td id="status-home">-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">GET</span></td>
+                            <td>/hello/:name</td>
+                            <td>Personalized greeting</td>
+                            <td id="status-hello">-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">GET</span></td>
+                            <td>/livez</td>
+                            <td>Liveness probe (container health)</td>
+                            <td id="status-livez">-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">GET</span></td>
+                            <td>/readyz</td>
+                            <td>Readiness probe (traffic ready)</td>
+                            <td id="status-readyz">-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">GET</span></td>
+                            <td>/example-record</td>
+                            <td>Query example table records</td>
+                            <td id="status-record">-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge">GET</span></td>
+                            <td>/metrics</td>
+                            <td>Prometheus metrics endpoint</td>
+                            <td id="status-metrics">-</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge secondary">DOCS</span></td>
+                            <td>/api-docs</td>
+                            <td>Swagger OpenAPI documentation</td>
+                            <td id="status-docs">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>🔧 Built with Node.js, Express, MySQL, and Prometheus Metrics</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Last Updated: <span id="lastUpdate">-</span></p>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = '';
+
+        // Helper function to format JSON responses
+        function formatJson(obj) {
+            return JSON.stringify(obj, null, 2);
+        }
+
+        // Display response in a card
+        function displayResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof data === 'string' ? data : formatJson(data);
+            element.className = `response-box ${isError ? 'error' : 'success'}`;
+            element.style.display = 'block';
+        }
+
+        // Hide response box
+        function hideResponse(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'none';
+        }
+
+        // Toggle loading spinner
+        function setLoading(elementId, isLoading) {
+            const element = document.getElementById(elementId);
+            element.classList.toggle('active', isLoading);
+        }
+
+        // Update endpoint status
+        function updateStatus(endpointId, status, message = '') {
+            const element = document.getElementById(`status-${endpointId}`);
+            if (element) {
+                element.textContent = status;
+            }
+        }
+
+        // Check server status (liveness and readiness)
+        async function checkStatus() {
+            try {
+                // Check liveness
+                const liveRes = await fetch(`${API_BASE}/livez`);
+                const liveData = await liveRes.json();
+                const liveStatus = liveRes.ok ? 'online' : 'offline';
+                
+                // Check readiness
+                const readyRes = await fetch(`${API_BASE}/readyz`);
+                const readyData = await readyRes.json();
+                const readyStatus = readyRes.ok ? 'online' : 'offline';
+
+                // Update liveness indicator
+                const liveEl = document.getElementById('liveness');
+                liveEl.innerHTML = `<p><span class="status-indicator ${liveStatus}"></span> <strong>Liveness:</strong> ${liveData.status} (Uptime: ${liveData.uptime?.toFixed(2)}s)</p>`;
+
+                // Update readiness indicator
+                const readyEl = document.getElementById('readiness');
+                readyEl.innerHTML = `<p><span class="status-indicator ${readyStatus}"></span> <strong>Readiness:</strong> ${readyData.status}</p>`;
+
+                // Update status table
+                updateStatus('livez', liveRes.ok ? '✅ OK' : '❌ Down');
+                updateStatus('readyz', readyRes.ok ? '✅ OK' : '❌ Down');
+
+                // Update footer
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+
+            } catch (error) {
+                console.error('Error checking status:', error);
+                document.getElementById('liveness').innerHTML = `<p><span class="status-indicator offline"></span> <strong>Liveness:</strong> Error - ${error.message}</p>`;
+                document.getElementById('readiness').innerHTML = `<p><span class="status-indicator offline"></span> <strong>Readiness:</strong> Error - ${error.message}</p>`;
+            }
+        }
+
+        // Call home endpoint
+        async function callHome() {
+            setLoading('homeLoading', true);
+            hideResponse('homeResponse');
+            try {
+                const res = await fetch(`${API_BASE}/`);
+                const data = await res.json();
+                displayResponse('homeResponse', data, !res.ok);
+                updateStatus('home', res.ok ? '✅ OK' : '❌ Error');
+            } catch (error) {
+                displayResponse('homeResponse', `Error: ${error.message}`, true);
+                updateStatus('home', '❌ Failed');
+            } finally {
+                setLoading('homeLoading', false);
+            }
+        }
+
+        // Call hello endpoint
+        async function callHello() {
+            const name = document.getElementById('nameInput').value || 'World';
+            setLoading('helloLoading', true);
+            hideResponse('helloResponse');
+            try {
+                const res = await fetch(`${API_BASE}/hello/${encodeURIComponent(name)}`);
+                const text = await res.text();
+                const element = document.getElementById('helloResponse');
+                element.textContent = text;
+                element.className = `response-box ${res.ok ? '' : 'error'}`;
+                element.style.display = 'block';
+                updateStatus('hello', res.ok ? '✅ OK' : '❌ Error');
+            } catch (error) {
+                displayResponse('helloResponse', `Error: ${error.message}`, true);
+                updateStatus('hello', '❌ Failed');
+            } finally {
+                setLoading('helloLoading', false);
+            }
+        }
+
+        // Call example record endpoint
+        async function callExampleRecord() {
+            const id = document.getElementById('recordId').value;
+            const params = id ? `?id=${id}` : '';
+            setLoading('recordLoading', true);
+            hideResponse('recordResponse');
+            try {
+                const res = await fetch(`${API_BASE}/example-record${params}`);
+                const data = await res.json();
+                displayResponse('recordResponse', data, !res.ok);
+                updateStatus('record', res.ok ? '✅ OK' : '❌ Error');
+            } catch (error) {
+                displayResponse('recordResponse', `Error: ${error.message}`, true);
+                updateStatus('record', '❌ Failed');
+            } finally {
+                setLoading('recordLoading', false);
+            }
+        }
+
+        // View metrics in new tab
+        function viewMetrics() {
+            window.open(`${API_BASE}/metrics`, '_blank');
+            updateStatus('metrics', '✅ OK');
+        }
+
+        // Open API documentation
+        function openApiDocs() {
+            window.open(`${API_BASE}/api-docs`, '_blank');
+            updateStatus('docs', '✅ OK');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkStatus();
+            // Refresh status every 30 seconds
+            setInterval(checkStatus, 30000);
+        });
+    </script>
+</body>
+</html>

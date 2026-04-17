@@ -63,6 +63,9 @@ export function createApp({ db } = {}) {
 
   app.locals.db = resolvedDb;
 
+  // Serve static files from public directory
+  app.use(express.static('public'));
+  
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
   app.use(express.json());
   app.use((req, res, next) => {
