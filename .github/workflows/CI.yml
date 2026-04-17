@@ -83,7 +83,7 @@ jobs:
 
   build-image:
     if: github.ref == 'refs/heads/main'
-    needs: nodejs-test
+    needs: sonarqube
     env:
        Dockerimage: mzm1/node-swagger-metrics:${{ github.sha }}
     runs-on: ubuntu-latest
