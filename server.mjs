@@ -63,9 +63,6 @@ export function createApp({ db } = {}) {
 
   app.locals.db = resolvedDb;
 
-  // Serve static files from public directory
-  app.use(express.static('public'));
-  
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
   app.use(express.json());
   app.use((req, res, next) => {
@@ -165,6 +162,9 @@ export function createApp({ db } = {}) {
     res.set('Content-Type', client.register.contentType);
     res.end(await client.register.metrics());
   });
+
+  // Serve static files from public directory (after all API routes)
+  app.use(express.static('public'));
 
   app.use((error, req, res, next) => {
     if (res.headersSent) {
