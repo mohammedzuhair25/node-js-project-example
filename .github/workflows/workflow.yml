@@ -98,7 +98,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   create-release:
-    needs: [ setup, ci ]
+    needs: [ setup, ci ,deploy-environment]
     if: needs.setup.outputs.is-release == 'true' && needs.setup.outputs.environment == 'prod' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -114,7 +114,51 @@ jobs:
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
       
-      - name: Create Release
+      - name: Generate New Version
+        id: version
         run: |
-          echo "Release created from ${{ github.ref }}"
-          echo "Previous version: ${{ steps.latest-tag.outputs.tag }}"
+          LATEST_TAG="${{ steps.latest-tag.outputs.tag }}"
+          MAJOR=$(echo $LATEST_TAG | cut -d. -f1 | sed 's/v//')
+          MINOR=$(echo $LATEST_TAG | cut -d. -f2)
+          PATCH=$(echo $LATEST_TAG | cut -d. -f3)
+          
+          # Increment patch version for releases
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Previous version: $LATEST_TAG"
+          echo "New version: $NEW_VERSION"
+      
+      - name: Create Git Tag
+        run: |
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+      
+      - name: Generate Release Notes
+        id: changelog
+        run: |
+          # Get commits since last tag
+          COMMITS=$(git log ${{ steps.latest-tag.outputs.tag }}..HEAD --oneline)
+          CHANGELOG="## Changes\n\n$COMMITS"
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            ## Release Information
+            **Version:** ${{ steps.version.outputs.version }}
+            **Previous Version:** ${{ steps.latest-tag.outputs.tag }}
+            **Branch:** ${{ github.ref }}
+            **Commit:** ${{ github.sha }}
+            
+            ## Changes Since Last Release
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
