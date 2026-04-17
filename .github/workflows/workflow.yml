@@ -87,6 +87,7 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       GH_PAT: ${{ secrets.GH_PAT }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   deploy-environment:
     needs: [ setup, ci ]
