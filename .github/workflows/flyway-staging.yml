@@ -33,6 +33,7 @@ jobs:
 
   Deploy-to-flyway-staging:
     runs-on: ubuntu-latest
+    needs: db-migration
     steps:
       - name: Checkout node js k8s manifest repo
         uses: actions/checkout@v4
