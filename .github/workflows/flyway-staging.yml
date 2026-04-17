@@ -46,7 +46,7 @@ jobs:
       - name: Update Deployment manifest for Destaging staging environment
         run: |
           cd node-js-example-k8s/k8s/helm-flyway
-          yq -i ".image.tag = \"${{ github.sha }}\"" values-staging.yaml
+          yq -i ".image.tag = \"staging-${{ github.sha }}\"" values-staging.yaml
       - name: Commit and push
         run: |
           cd node-js-example-k8s
