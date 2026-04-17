@@ -63,6 +63,7 @@ jobs:
            package-lock.json
            *.mjs
            Dockerfile
+           public/index.html
           
   build-image:
     if: github.ref == 'refs/heads/main'
