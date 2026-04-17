@@ -64,7 +64,23 @@ jobs:
            *.mjs
            Dockerfile
            public/index.html
-          
+           
+  sonarqube:
+    runs-on: ubuntu-latest
+    needs: nodejs-test
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        # Disabling shallow clones is recommended for improving the relevancy of reporting
+        fetch-depth: 0
+    - name: Install dependencies
+      run: npm install 
+      
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v6
+      env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   build-image:
     if: github.ref == 'refs/heads/main'
     needs: nodejs-test
