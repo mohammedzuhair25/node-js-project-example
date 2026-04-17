@@ -6,4 +6,6 @@ COPY db/migrations /flyway/sql
 # Optional: set default command
 ENTRYPOINT ["flyway"]
 CMD ["migrate"]
+
 # To build the image, run: test1
+
