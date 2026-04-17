@@ -1,3 +1,8 @@
+CREATE USER 'appuser'@'%' IDENTIFIED BY 'apppassword';
+GRANT ALL PRIVILEGES ON *.* TO 'appuser'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+
+
 CREATE DATABASE IF NOT EXISTS app_db;
 USE app_db;
 
