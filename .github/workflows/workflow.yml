@@ -73,7 +73,7 @@ jobs:
   db-migration-staging:
     needs: setup
     if: (github.ref == 'refs/heads/feature/db-migration-staging' || github.ref == 'refs/heads/hotfix/db-migration-staging') && github.event_name == 'push'
-    uses: mohammedzuhair25/node-js-project-example/.github/workflows/flyway-dev.yml@main
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/flyway-staging.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

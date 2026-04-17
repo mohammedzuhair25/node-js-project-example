@@ -1,0 +1,57 @@
+name: Flyway DB Migration (Dev)
+
+on:
+  workflow_call:
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+      GH_PAT:
+        required: true
+
+jobs:
+  db-migration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name : check files
+        run: ls -ltr 
+        
+      - name: Login to Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & Push Flyway Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:staging-${{ github.sha }} ./flyway
+          docker push ${{ secrets.DOCKER_USERNAME }}/flyway-migrations:staging-${{ github.sha }}
+
+  Deploy-to-flyway-staging:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout node js k8s manifest repo
+        uses: actions/checkout@v4
+
+      - name: Clone target repo
+        run: |
+          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+
+      - name: Update Deployment manifest for Destaging staging environment
+        run: |
+          cd node-js-example-k8s/k8s/helm-flyway
+          yq -i ".image.tag = \"${{ github.sha }}\"" values-staging.yaml
+      - name: Commit and push
+        run: |
+          cd node-js-example-k8s
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image with tag ${{ github.sha }} by ${{ github.actor }}"
+          git push origin main
