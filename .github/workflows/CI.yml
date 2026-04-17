@@ -8,6 +8,8 @@ on:
         required: true
       DOCKER_PASSWORD:
         required: true
+      SONAR_TOKEN:
+        required: true
       GH_PAT:
         required: true
 jobs:

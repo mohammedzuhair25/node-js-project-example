@@ -97,6 +97,7 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
+
   create-release:
     needs: [ setup, ci ,deploy-environment]
     if: needs.setup.outputs.is-release == 'true' && needs.setup.outputs.environment == 'prod' && github.event_name == 'push'
