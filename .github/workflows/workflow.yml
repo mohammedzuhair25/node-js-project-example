@@ -82,6 +82,10 @@ jobs:
   ci:
     needs: setup
     if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/CI.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
