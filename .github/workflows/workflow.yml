@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: Target environment
-        required: true
-        default: dev
+        description: 'Target environment for manual deployment'
+        required: false
+        default: 'dev'
         type: choice
         options:
           - dev
@@ -27,78 +27,61 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  DEFAULT_ENV: dev
+  cancel-in-progress: false
 
 jobs:
+  # Determine target environment based on branch
   setup:
-    name: Resolve Environment
+    name: Setup Environment
     runs-on: ubuntu-latest
     outputs:
-      environment: ${{ steps.resolve.outputs.environment }}
-      should_deploy: ${{ steps.resolve.outputs.should_deploy }}
-      is_release: ${{ steps.resolve.outputs.is_release }}
-
+      environment: ${{ steps.set-env.outputs.environment }}
+      should-deploy: ${{ steps.set-env.outputs.should-deploy }}
+      is-release: ${{ steps.set-env.outputs.is-release }}
     steps:
-      - name: Resolve environment
-        id: resolve
+      - name: Set Environment Variables
+        id: set-env
         run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-
-          # Manual trigger takes priority
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            ENV="${{ github.event.inputs.environment }}"
-            SHOULD_DEPLOY=true
-            IS_RELEASE=false
-
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            ENV="prod"
-            SHOULD_DEPLOY=true
-            IS_RELEASE=true
-
-          elif [[ "${{ github.ref }}" =~ ^refs/heads/release/ ]]; then
-            ENV="staging"
-            SHOULD_DEPLOY=true
-            IS_RELEASE=true
-
-          elif [[ "${{ github.ref }}" =~ ^refs/heads/hotfix/ ]]; then
-            ENV="staging"
-            SHOULD_DEPLOY=true
-            IS_RELEASE=false
-
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "is-release=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/release/"* ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "is-release=true" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            ENV="dev"
-            SHOULD_DEPLOY=true
-            IS_RELEASE=false
-
-          elif [[ "${{ github.ref }}" =~ ^refs/heads/feature/ ]]; then
-            ENV="dev"
-            SHOULD_DEPLOY=true
-            IS_RELEASE=false
-
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "is-release=false" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/hotfix/"* ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "should-deploy=true" >> $GITHUB_OUTPUT
+            echo "is-release=false" >> $GITHUB_OUTPUT
           else
-            ENV="${DEFAULT_ENV}"
-            SHOULD_DEPLOY=false
-            IS_RELEASE=false
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "should-deploy=false" >> $GITHUB_OUTPUT
+            echo "is-release=false" >> $GITHUB_OUTPUT
           fi
-
-          echo "environment=$ENV" >> $GITHUB_OUTPUT
-          echo "should_deploy=$SHOULD_DEPLOY" >> $GITHUB_OUTPUT
-          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
-
-      - name: Debug
+      - name: Debug Environment
         run: |
-          echo "Environment: ${{ steps.resolve.outputs.environment }}"
-          echo "Deploy: ${{ steps.resolve.outputs.should_deploy }}"
-          echo "Release: ${{ steps.resolve.outputs.is_release }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Environment: ${{ steps.set-env.outputs.environment }}"
+          echo "Should Deploy: ${{ steps.set-env.outputs.should-deploy }}"
+          echo "Is Release: ${{ steps.set-env.outputs.is-release }}"
+
+  db-migration-staging:
+    needs: setup
+    if: (github.ref == 'refs/heads/feature/db-migration-staging' || github.ref == 'refs/heads/hotfix/db-migration-staging') && github.event_name == 'push'
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/flyway-staging.yml@main
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   ci:
-    name: CI Pipeline
     needs: setup
-    if: always()
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/CI.yml@main
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -106,93 +89,78 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  db-migration:
-    name: DB Migration (Staging Only)
-    needs: setup
-    if: |
-      needs.setup.outputs.environment == 'staging' &&
-      github.event_name == 'push' &&
-      (startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/'))
-    uses: mohammedzuhair25/node-js-project-example/.github/workflows/flyway-staging.yml@main
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      GH_PAT: ${{ secrets.GH_PAT }}
-
-  deploy:
-    name: Deploy
-    needs: [setup, ci]
-    if: needs.setup.outputs.should_deploy == 'true' && github.event_name != 'pull_request'
+  deploy-environment:
+    needs: [ setup, ci ]
+    if: needs.setup.outputs.should-deploy == 'true' && github.event_name == 'push'
     uses: mohammedzuhair25/node-js-project-example/.github/workflows/CD.yml@main
     with:
       environment: ${{ needs.setup.outputs.environment }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
-  release:
-    name: Create Release
-    needs: [setup, ci, deploy]
-    if: |
-      needs.setup.outputs.is_release == 'true' &&
-      needs.setup.outputs.environment == 'prod' &&
-      github.event_name == 'push'
+
+  create-release:
+    needs: [ setup, ci ,deploy-environment]
+    if: needs.setup.outputs.is-release == 'true' && needs.setup.outputs.environment == 'prod' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Get latest tag
-        id: latest
+      
+      - name: Get Latest Tag
+        id: latest-tag
         run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Generate version
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+      
+      - name: Generate New Version
         id: version
         run: |
-          TAG="${{ steps.latest.outputs.tag }}"
-          MAJOR=$(echo $TAG | cut -d. -f1 | tr -d 'v')
-          MINOR=$(echo $TAG | cut -d. -f2)
-          PATCH=$(echo $TAG | cut -d. -f3)
-
-          NEW_VERSION="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          LATEST_TAG="${{ steps.latest-tag.outputs.tag }}"
+          MAJOR=$(echo $LATEST_TAG | cut -d. -f1 | sed 's/v//')
+          MINOR=$(echo $LATEST_TAG | cut -d. -f2)
+          PATCH=$(echo $LATEST_TAG | cut -d. -f3)
+          
+          # Increment patch version for releases
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create tag safely
+          echo "Previous version: $LATEST_TAG"
+          echo "New version: $NEW_VERSION"
+      
+      - name: Create Git Tag
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          if git rev-parse "$VERSION" >/dev/null 2>&1; then
-            echo "Tag exists, skipping"
-          else
-            git tag $VERSION
-            git push origin $VERSION
-          fi
-
-      - name: Generate changelog
+          git tag ${{ steps.version.outputs.version }}
+          git push origin ${{ steps.version.outputs.version }}
+      
+      - name: Generate Release Notes
         id: changelog
         run: |
-          LOG=$(git log ${{ steps.latest.outputs.tag }}..HEAD --oneline)
+          # Get commits since last tag
+          COMMITS=$(git log ${{ steps.latest-tag.outputs.tag }}..HEAD --oneline)
+          CHANGELOG="## Changes\n\n$COMMITS"
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$LOG" >> $GITHUB_OUTPUT
+          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub release
+      
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: Release ${{ steps.version.outputs.version }}
           body: |
-            ## Release Info
-            Version: ${{ steps.version.outputs.version }}
-            Previous: ${{ steps.latest.outputs.tag }}
-
-            ## Changes
+            ## Release Information
+            **Version:** ${{ steps.version.outputs.version }}
+            **Previous Version:** ${{ steps.latest-tag.outputs.tag }}
+            **Branch:** ${{ github.ref }}
+            **Commit:** ${{ github.sha }}
+            
+            ## Changes Since Last Release
             ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
