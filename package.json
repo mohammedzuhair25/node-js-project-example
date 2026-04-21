@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
+    "lint": "npx --yes eslint@8 . --ext .mjs",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
