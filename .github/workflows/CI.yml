@@ -36,7 +36,7 @@ jobs:
         cache: 'npm'
     - name: Install dependencies, build
       run: |
-        npm install
+        npm ci
     - name: Audit dependencies
       run: npm audit --audit-level=high
     - name: Run lint
