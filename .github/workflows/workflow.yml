@@ -81,6 +81,9 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       GH_PAT: ${{ secrets.GH_PAT }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
 
 
   deploy-environment:
@@ -92,3 +95,5 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}

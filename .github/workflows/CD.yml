@@ -9,6 +9,12 @@ on:
     secrets:
       GH_PAT:
         required: true
+      SERVER_HOST:
+        required: true
+      SERVER_USER:
+        required: true
+      SERVER_SSH_KEY:
+        required: true
 jobs:
   Deploy-to-Dev:
     environment:
