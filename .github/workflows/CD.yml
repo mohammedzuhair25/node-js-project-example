@@ -36,11 +36,11 @@ jobs:
             pwd
             ls -ltr
             echo "Stopping application..."
-            stop.sh || true
+            ./stop.sh || true
             echo "Updating source..."
             git fetch origin
             git reset --hard origin/main
             echo "Installing dependencies..."
             npm ci
             echo "Starting application..."
-            start.sh
+            ./start.sh || true
