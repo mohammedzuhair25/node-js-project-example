@@ -12,6 +12,12 @@ on:
         required: true
       GH_PAT:
         required: true
+      SERVER_HOST:
+        required: true
+      SERVER_USER:
+        required: true
+      SERVER_SSH_KEY:
+        required: true
 
 permissions:
   contents: read
