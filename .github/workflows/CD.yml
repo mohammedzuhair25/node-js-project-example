@@ -31,16 +31,16 @@ jobs:
           port: 22
 
           script: |
+            echo "Connected to server: ${{ secrets.SERVER_HOST }}"
             cd /home/ubuntu/nodejs-project/node-js-project-example
-
+            pwd
+            ls -ltr
             echo "Stopping application..."
             stop.sh || true
             echo "Updating source..."
             git fetch origin
             git reset --hard origin/main
-
             echo "Installing dependencies..."
             npm ci
-
             echo "Starting application..."
             start.sh
