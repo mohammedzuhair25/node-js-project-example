@@ -160,16 +160,5 @@ jobs:
           gh workflow run CD.yml \
             --repo ${{ github.repository }} \
             --ref main \
-            -f environment=dev \
-            -f image_tag=${{ github.sha }}
-
-      - name: Trigger STAGING CD Pipeline
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          gh workflow run CD.yml \
-            --repo ${{ github.repository }} \
-            --ref main \
-            -f environment=staging \
             -f image_tag=${{ github.sha }}
 
