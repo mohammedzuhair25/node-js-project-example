@@ -147,3 +147,22 @@ jobs:
           exit-code: 1
           severity: CRITICAL
           ignore-unfixed: true
+          
+  trigger-cd:
+    name: Trigger CD
+    needs:
+      - build
+      - test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger CD Pipeline
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh workflow run CD.yml \
+            --repo ${{ github.repository }} \
+            --ref main \
+            -f environment=dev \
+            -f image_tag=${{ github.sha }}
