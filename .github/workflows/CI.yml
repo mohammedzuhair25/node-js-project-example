@@ -157,7 +157,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh workflow run CD.yml \
+          gh workflow run .github/workflows/CD.yml \
             --repo ${{ github.repository }} \
             --ref main \
             -f image_tag=${{ github.sha }} \
