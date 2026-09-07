@@ -1,27 +1,39 @@
 name: Node.js CD
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+      image_tag:
+        description: Image / release tag
         required: true
         type: string
-    secrets:
-      GH_PAT:
-        required: true
-      SERVER_HOST:
-        required: true
-      SERVER_USER:
-        required: true
-      SERVER_SSH_KEY:
-        required: true
+
 jobs:
-  Deploy-to-Dev:
-    environment:
-      name: dev
-    if: github.ref == 'refs/heads/main'
+
+  Deploy:
+    name: Deploy to ${{ inputs.environment }}
     runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ inputs.environment }}
+
     steps:
+
+      - name: Deployment information
+        run: |
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Image tag: ${{ inputs.image_tag }}"
+          echo "Branch: ${{ github.ref }}"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -32,15 +44,22 @@ jobs:
 
           script: |
             echo "Connected to server: ${{ secrets.SERVER_HOST }}"
+
             cd /home/ubuntu/nodejs-project/node-js-project-example
+
             pwd
             ls -ltr
+
             echo "Stopping application..."
             ./stop.sh || true
+
             echo "Updating source..."
             git fetch origin
+
             git reset --hard origin/main
+
             echo "Installing dependencies..."
             npm ci
+
             echo "Starting application..."
             ./start.sh || true
