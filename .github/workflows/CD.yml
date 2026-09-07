@@ -3,17 +3,8 @@ name: Node.js CD
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: Target environment
-        required: true
-        type: choice
-        options:
-          - dev
-          - staging
-          - prod
-
       image_tag:
-        description: Image tag
+        description: Image tag to deploy
         required: true
         type: string
 
@@ -24,31 +15,23 @@ jobs:
   # ============================================================
   Deploy-to-Dev:
     name: Deploy to Dev
-
-    if: inputs.environment == 'dev'
-
     runs-on: ubuntu-latest
 
     environment:
       name: dev
 
     concurrency:
-      group: update-k8s-repo-dev
+      group: update-k8s-repo
       cancel-in-progress: false
 
     steps:
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Clone Kubernetes manifest repository
         run: |
           git clone \
             https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
       - name: Install yq
-        run: |
-          sudo snap install yq
+        uses: mikefarah/yq@v4.47.2
 
       - name: Update Dev manifest
         run: |
@@ -58,10 +41,10 @@ jobs:
             ".image.tag = \"${{ inputs.image_tag }}\"" \
             values-dev.yaml
 
-          echo "Updated values-dev.yaml:"
+          echo "Updated Dev manifest:"
           cat values-dev.yaml
 
-      - name: Commit and push
+      - name: Commit and push Dev
         run: |
           cd node-js-example-k8s
 
@@ -85,7 +68,8 @@ jobs:
   Deploy-to-Staging:
     name: Deploy to Staging
 
-    if: inputs.environment == 'staging'
+    needs:
+      - Deploy-to-Dev
 
     runs-on: ubuntu-latest
 
@@ -93,22 +77,17 @@ jobs:
       name: staging
 
     concurrency:
-      group: update-k8s-repo-staging
+      group: update-k8s-repo
       cancel-in-progress: false
 
     steps:
-
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Clone Kubernetes manifest repository
         run: |
           git clone \
             https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
       - name: Install yq
-        run: |
-          sudo snap install yq
+        uses: mikefarah/yq@v4.47.2
 
       - name: Update Staging manifest
         run: |
@@ -118,10 +97,10 @@ jobs:
             ".image.tag = \"${{ inputs.image_tag }}\"" \
             values-staging.yaml
 
-          echo "Updated values-staging.yaml:"
+          echo "Updated Staging manifest:"
           cat values-staging.yaml
 
-      - name: Commit and push
+      - name: Commit and push Staging
         run: |
           cd node-js-example-k8s
 
