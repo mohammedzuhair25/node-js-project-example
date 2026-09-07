@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency: 
       group: update-k8s-repo
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - name: Checkout node js k8s manifest repo
         uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
       name: staging
     concurrency: 
       group: update-k8s-repo
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - name: Checkout node js k8s manifest repo
         uses: actions/checkout@v4
