@@ -3,17 +3,11 @@ name: Node.js CI
 on:
   push:
     branches:
-      - main
       - develop
-      - "feature/**"
-      - "release/**"
-      - "hotfix/**"
 
   pull_request:
     branches:
       - main
-      - develop
-      - "release/**"
 
   workflow_dispatch:
 
@@ -91,76 +85,90 @@ jobs:
         with:
           name: nodejs-coverage
           path: coverage/
-          if-no-files-found: warn    
-          
-      - name : Upload source code as artifact    
+          if-no-files-found: warn
+
+      - name: Upload source code as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: image-depedency
+          name: image-dependency
           path: |
-           package.json
-           package-lock.json
-           *.mjs
-           Dockerfile
-           public/
+            package.json
+            package-lock.json
+            *.mjs
+            Dockerfile
+            public/
 
 
   build-image:
+    name: Build Docker Image
     if: github.ref == 'refs/heads/main'
     needs: test
-    env:
-       Dockerimage: mzm1/node-swagger-metrics:${{ github.sha }}
     runs-on: ubuntu-latest
+
     steps:
+      - name: Download source code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: image-dependency
 
-    - name : Download source code artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: image-depedency
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Login to DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: mzm1/node-swagger-metrics:${{ github.sha }}
 
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
-      with:
-       context: .
-       push: true  # or true if pushing to registry
-       tags: mzm1/node-swagger-metrics:${{ github.sha }}
 
-  Scan_image_for_vulnerabilities:
+  scan-image-for-vulnerabilities:
+    name: Scan Image for Vulnerabilities
     if: github.ref == 'refs/heads/main'
     needs: build-image
     runs-on: ubuntu-latest
+
     steps:
-    - name: Scan image for vulnerabilities
-      uses: aquasecurity/trivy-action@v0.35.0
-      with:
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
           image-ref: mzm1/node-swagger-metrics:${{ github.sha }}
           format: table
           exit-code: 1
           severity: CRITICAL
           ignore-unfixed: true
-          
+
+
   trigger-cd:
     name: Trigger CD
     needs:
-      - Scan_image_for_vulnerabilities
-
+      - scan-image-for-vulnerabilities
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger CD Pipeline
+      - name: Trigger DEV CD Pipeline
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh workflow run CD.yml \
             --repo ${{ github.repository }} \
-            --ref main \
+            --ref develop \
+            -f environment=dev \
             -f image_tag=${{ github.sha }}
+
+      - name: Trigger STAGING CD Pipeline
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh workflow run CD.yml \
+            --repo ${{ github.repository }} \
+            --ref develop \
+            -f environment=staging \
+            -f image_tag=${{ github.sha }}
+
