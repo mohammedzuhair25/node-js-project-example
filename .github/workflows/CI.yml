@@ -161,4 +161,4 @@ jobs:
             --repo ${{ github.repository }} \
             --ref main \
             -f image_tag=${{ github.sha }}
-
+            -f release_version=1.3.1
