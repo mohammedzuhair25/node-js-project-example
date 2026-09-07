@@ -151,8 +151,7 @@ jobs:
   trigger-cd:
     name: Trigger CD
     needs:
-      - build
-      - test
+      - build-image
 
     runs-on: ubuntu-latest
 
