@@ -18,48 +18,64 @@ on:
         type: string
 
 jobs:
-
-  Deploy:
-    name: Deploy to ${{ inputs.environment }}
-    runs-on: ubuntu-latest
-
+  Deploy-to-Dev:
     environment:
-      name: ${{ inputs.environment }}
-
+      name: dev
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: 
+      group: update-k8s-repo
+      cancel-in-progress: true
     steps:
+      - name: Checkout node js k8s manifest repo
+        uses: actions/checkout@v4
 
-      - name: Deployment information
+      - name: Clone target repo
         run: |
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Image tag: ${{ inputs.image_tag }}"
-          echo "Branch: ${{ github.ref }}"
+          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
+      - name: Update Deployment manifest for Dev environment
+        run: |
+          cd node-js-example-k8s/k8s/helm-node-app
+          yq -i ".image.tag = \"${{ github.sha }}\"" values-dev.yaml
+      - name: Commit and push
+        run: |
+          cd node-js-example-k8s
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image with latest tag ${{ github.sha }}"
+          git push origin main
 
-          script: |
-            echo "Connected to server: ${{ secrets.SERVER_HOST }}"
 
-            cd /home/ubuntu/nodejs-project/node-js-project-example
 
-            pwd
-            ls -ltr
+  Deploy-to-staging:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    concurrency: 
+      group: update-k8s-repo
+      cancel-in-progress: true
+    steps:
+      - name: Checkout node js k8s manifest repo
+        uses: actions/checkout@v4
 
-            echo "Stopping application..."
-            ./stop.sh || true
+      - name: Clone target repo
+        run: |
+          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
+           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
-            echo "Updating source..."
-            git fetch origin
-
-            git reset --hard origin/main
-
-            echo "Installing dependencies..."
-            npm ci
-
-            echo "Starting application..."
-            ./start.sh || true
+      - name: Update Deployment manifest for Destaging staging environment
+        run: |
+          cd node-js-example-k8s/k8s/helm-node-app
+          yq -i ".image.tag = \"${{ github.sha }}\"" values-staging.yaml
+      - name: Commit and push
+        run: |
+          cd node-js-example-k8s
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update image with latest tag ${{ github.sha }}"
+          git push origin main
