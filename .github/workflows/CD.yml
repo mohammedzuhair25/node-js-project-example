@@ -20,9 +20,6 @@ jobs:
     environment:
       name: dev
 
-    concurrency:
-      group: update-k8s-repo
-
     steps:
       - name: Clone Kubernetes manifest repository
         run: |
@@ -74,9 +71,6 @@ jobs:
 
     environment:
       name: staging
-
-    concurrency:
-      group: update-k8s-repo
 
     steps:
       - name: Clone Kubernetes manifest repository
