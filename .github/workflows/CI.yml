@@ -151,7 +151,7 @@ jobs:
   trigger-cd:
     name: Trigger CD
     needs:
-      - build-image
+      - Scan_image_for_vulnerabilities
 
     runs-on: ubuntu-latest
 
@@ -163,5 +163,4 @@ jobs:
           gh workflow run CD.yml \
             --repo ${{ github.repository }} \
             --ref main \
-            -f environment=dev \
             -f image_tag=${{ github.sha }}
