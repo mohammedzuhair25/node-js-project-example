@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: Image tag to deploy
+        description: Docker image tag to deploy
         required: true
         type: string
 
@@ -13,6 +13,8 @@ on:
         required: true
         type: string
 
+# Prevent multiple CD pipelines from modifying the GitOps repository
+# at the same time.
 concurrency:
   group: node-cd
   cancel-in-progress: false
@@ -30,26 +32,45 @@ jobs:
       name: dev
 
     steps:
+
+      # ----------------------------------------------------------
+      # Clone GitOps repository
+      # ----------------------------------------------------------
       - name: Clone Kubernetes manifest repository
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git clone \
-            https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+            https://x-access-token:${GH_PAT}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
+      # ----------------------------------------------------------
+      # Install yq
+      # ----------------------------------------------------------
       - name: Install yq
         uses: mikefarah/yq@v4.47.2
 
+      # ----------------------------------------------------------
+      # Update DEV image
+      # ----------------------------------------------------------
       - name: Update Dev manifest
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           cd node-js-example-k8s/k8s/helm-node-app
 
           yq -i \
-            ".image.tag = \"${{ inputs.image_tag }}\"" \
+            ".image.tag = \"${IMAGE_TAG}\"" \
             values-dev.yaml
 
           echo "Updated Dev manifest:"
           cat values-dev.yaml
 
+      # ----------------------------------------------------------
+      # Commit and push DEV
+      # ----------------------------------------------------------
       - name: Commit and push Dev
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           cd node-js-example-k8s
 
@@ -58,11 +79,16 @@ jobs:
 
           git add k8s/helm-node-app/values-dev.yaml
 
+          echo "Changes to be committed:"
           git diff --cached
 
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
           git commit \
-            -m "Update dev image to ${{ inputs.image_tag }}" \
-            || echo "No changes to commit"
+            -m "Update dev image to ${IMAGE_TAG}"
 
           git push origin main
 
@@ -78,30 +104,55 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # IMPORTANT:
+    #
+    # Configure required reviewers/approval on the GitHub
+    # "staging" environment.
+    #
+    # The job will pause here until staging approval is granted.
     environment:
       name: staging
 
     steps:
+
+      # ----------------------------------------------------------
+      # Clone GitOps repository
+      # ----------------------------------------------------------
       - name: Clone Kubernetes manifest repository
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git clone \
-            https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+            https://x-access-token:${GH_PAT}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
+      # ----------------------------------------------------------
+      # Install yq
+      # ----------------------------------------------------------
       - name: Install yq
         uses: mikefarah/yq@v4.47.2
 
+      # ----------------------------------------------------------
+      # Update STAGING image
+      # ----------------------------------------------------------
       - name: Update Staging manifest
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           cd node-js-example-k8s/k8s/helm-node-app
 
           yq -i \
-            ".image.tag = \"${{ inputs.image_tag }}\"" \
+            ".image.tag = \"${IMAGE_TAG}\"" \
             values-staging.yaml
 
           echo "Updated Staging manifest:"
           cat values-staging.yaml
 
+      # ----------------------------------------------------------
+      # Commit and push STAGING
+      # ----------------------------------------------------------
       - name: Commit and push Staging
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           cd node-js-example-k8s
 
@@ -110,11 +161,16 @@ jobs:
 
           git add k8s/helm-node-app/values-staging.yaml
 
+          echo "Changes to be committed:"
           git diff --cached
 
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
           git commit \
-            -m "Update staging image to ${{ inputs.image_tag }}" \
-            || echo "No changes to commit"
+            -m "Update staging image to ${IMAGE_TAG}"
 
           git push origin main
 
@@ -125,6 +181,8 @@ jobs:
   Create-Release-Tag:
     name: Create Release Tag
 
+    # This guarantees that the tag is created ONLY after
+    # Deploy-to-Staging completes successfully.
     needs:
       - Deploy-to-Staging
 
@@ -134,43 +192,86 @@ jobs:
       contents: write
 
     steps:
+
+      # ----------------------------------------------------------
+      # Checkout source repository
+      # ----------------------------------------------------------
       - name: Checkout source repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
 
+      # ----------------------------------------------------------
+      # Validate release version
+      # ----------------------------------------------------------
       - name: Validate release version
         env:
           RELEASE_VERSION: ${{ inputs.release_version }}
         run: |
           if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "ERROR: Invalid version: $RELEASE_VERSION"
-            echo "Expected format: 1.3.1"
+            echo "ERROR: Invalid release version: $RELEASE_VERSION"
+            echo ""
+            echo "Expected format:"
+            echo "  1.3.0"
+            echo "  1.3.1"
+            echo "  1.4.0"
             exit 1
           fi
 
+          echo "Release version is valid: ${RELEASE_VERSION}"
+
+      # ----------------------------------------------------------
+      # Create release tag
+      # ----------------------------------------------------------
       - name: Create release tag
         env:
           RELEASE_VERSION: ${{ inputs.release_version }}
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
+
           TAG="v${RELEASE_VERSION}"
 
-          echo "Creating release tag: ${TAG}"
-          echo "Docker image: ${IMAGE_TAG}"
+          echo "========================================"
+          echo "Creating Release"
+          echo "========================================"
+          echo "Release tag : ${TAG}"
+          echo "Image tag   : ${IMAGE_TAG}"
+          echo "========================================"
 
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
+          # ------------------------------------------------------
+          # Make sure the tag does not already exist
+          # ------------------------------------------------------
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "ERROR: Tag ${TAG} already exists."
             exit 1
           fi
 
+          # ------------------------------------------------------
+          # Verify that image SHA is a valid commit
+          # ------------------------------------------------------
+          if ! git cat-file -e "${IMAGE_TAG}^{commit}" 2>/dev/null; then
+            echo "ERROR: ${IMAGE_TAG} is not a valid Git commit."
+            exit 1
+          fi
+
+          # ------------------------------------------------------
+          # Create annotated tag
+          # ------------------------------------------------------
           git tag \
-            -a "$TAG" \
-            "$IMAGE_TAG" \
+            -a "${TAG}" \
+            "${IMAGE_TAG}" \
             -m "Release ${TAG}"
 
-          git push origin "$TAG"
+          # ------------------------------------------------------
+          # Push tag
+          # ------------------------------------------------------
+          git push origin "${TAG}"
+
+          echo ""
+          echo "========================================"
+          echo "Release ${TAG} created successfully"
+          echo "========================================"
