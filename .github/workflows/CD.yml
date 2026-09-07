@@ -22,7 +22,6 @@ jobs:
 
     concurrency:
       group: update-k8s-repo
-      cancel-in-progress: false
 
     steps:
       - name: Clone Kubernetes manifest repository
@@ -78,7 +77,6 @@ jobs:
 
     concurrency:
       group: update-k8s-repo
-      cancel-in-progress: false
 
     steps:
       - name: Clone Kubernetes manifest repository
