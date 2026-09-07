@@ -13,69 +13,127 @@ on:
           - prod
 
       image_tag:
-        description: Image / release tag
+        description: Image tag
         required: true
         type: string
 
 jobs:
+
+  # ============================================================
+  # DEV
+  # ============================================================
   Deploy-to-Dev:
+    name: Deploy to Dev
+
+    if: inputs.environment == 'dev'
+
+    runs-on: ubuntu-latest
+
     environment:
       name: dev
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    concurrency: 
-      group: update-k8s-repo
+
+    concurrency:
+      group: update-k8s-repo-dev
       cancel-in-progress: false
+
     steps:
-      - name: Checkout node js k8s manifest repo
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clone target repo
+      - name: Clone Kubernetes manifest repository
         run: |
-          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
-           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+          git clone \
+            https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
-      - name: Update Deployment manifest for Dev environment
+      - name: Install yq
+        run: |
+          sudo snap install yq
+
+      - name: Update Dev manifest
         run: |
           cd node-js-example-k8s/k8s/helm-node-app
-          yq -i ".image.tag = \"${{ github.sha }}\"" values-dev.yaml
+
+          yq -i \
+            ".image.tag = \"${{ inputs.image_tag }}\"" \
+            values-dev.yaml
+
+          echo "Updated values-dev.yaml:"
+          cat values-dev.yaml
+
       - name: Commit and push
         run: |
           cd node-js-example-k8s
+
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add .
-          git commit -m "Update image with latest tag ${{ github.sha }}"
+
+          git add k8s/helm-node-app/values-dev.yaml
+
+          git diff --cached
+
+          git commit \
+            -m "Update dev image to ${{ inputs.image_tag }}" \
+            || echo "No changes to commit"
+
           git push origin main
 
 
+  # ============================================================
+  # STAGING
+  # ============================================================
+  Deploy-to-Staging:
+    name: Deploy to Staging
 
-  Deploy-to-staging:
-    if: github.ref == 'refs/heads/main'
+    if: inputs.environment == 'staging'
+
     runs-on: ubuntu-latest
+
     environment:
       name: staging
-    concurrency: 
-      group: update-k8s-repo
+
+    concurrency:
+      group: update-k8s-repo-staging
       cancel-in-progress: false
+
     steps:
-      - name: Checkout node js k8s manifest repo
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clone target repo
+      - name: Clone Kubernetes manifest repository
         run: |
-          #git clone https://github.com/mohammedzuhair25/node-js-example-k8s.git
-           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
+          git clone \
+            https://x-access-token:${{ secrets.GH_PAT }}@github.com/mohammedzuhair25/node-js-example-k8s.git
 
-      - name: Update Deployment manifest for Destaging staging environment
+      - name: Install yq
+        run: |
+          sudo snap install yq
+
+      - name: Update Staging manifest
         run: |
           cd node-js-example-k8s/k8s/helm-node-app
-          yq -i ".image.tag = \"${{ github.sha }}\"" values-staging.yaml
+
+          yq -i \
+            ".image.tag = \"${{ inputs.image_tag }}\"" \
+            values-staging.yaml
+
+          echo "Updated values-staging.yaml:"
+          cat values-staging.yaml
+
       - name: Commit and push
         run: |
           cd node-js-example-k8s
+
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add .
-          git commit -m "Update image with latest tag ${{ github.sha }}"
+
+          git add k8s/helm-node-app/values-staging.yaml
+
+          git diff --cached
+
+          git commit \
+            -m "Update staging image to ${{ inputs.image_tag }}" \
+            || echo "No changes to commit"
+
           git push origin main
