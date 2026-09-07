@@ -1,73 +1,142 @@
-name: Node.js CI
-
+name: CI-Pipeline
 
 on:
-  workflow_call:
-    secrets:
-      DOCKER_USERNAME:
-        required: true
-      DOCKER_PASSWORD:
-        required: true
-      SONAR_TOKEN:
-        required: true
-      GH_PAT:
-        required: true
-      SERVER_HOST:
-        required: true
-      SERVER_USER:
-        required: true
-      SERVER_SSH_KEY:
-        required: true
+  push:
+    branches:
+      - main
+      - develop
+      - feature/**
+      - release/**
+      - hotfix/**
 
-permissions:
-  contents: read
-  checks: write
-  pull-requests: write
+  pull_request:
+    branches:
+      - main
+      - develop
+      - release/**
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment for manual deployment
+        required: false
+        default: dev
+        type: choice
+        options:
+          - dev
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build:
+
+  # ============================================================
+  # Determine Environment
+  # ============================================================
+  setup:
+    name: Setup Environment
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      should-deploy: ${{ steps.set-env.outputs.should-deploy }}
+      is-release: ${{ steps.set-env.outputs.is-release }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - name: Install dependencies, build
-      run: |
-        npm ci
-    - name: Run lint
-      run: npm run lint
-        
-  nodejs-test:
-    runs-on: ubuntu-latest
-   
-    needs: build
-    steps:
-     - uses: actions/checkout@v4
-     - name: Use Node.js 20.x
-       uses: actions/setup-node@v4
-       with:
-         node-version: 24.x
-         cache: 'npm'
-     - name: Run tests
-       run: |
-         npm ci
-         npm run lint
-         npm test -- --coverage
 
-     - name: Run tests with JUnit output
-       run: npm test -- --reporters=default --reporters=jest-junit
+      - name: Determine Environment
+        id: set-env
+        shell: bash
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
 
-     - name: Publish test results
-       if: always()
-       uses: EnricoMi/publish-unit-test-result-action@v2
-       with:
-         files: junit.xml
+          echo "Branch: $BRANCH"
+
+          if [[ "$BRANCH" == "main" ]]; then
+            echo "environment=prod" >> "$GITHUB_OUTPUT"
+            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+            echo "is-release=true" >> "$GITHUB_OUTPUT"
+
+          elif [[ "$BRANCH" == release/* ]]; then
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+            echo "is-release=true" >> "$GITHUB_OUTPUT"
+
+          elif [[ "$BRANCH" == "develop" ]]; then
+            echo "environment=dev" >> "$GITHUB_OUTPUT"
+            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+            echo "is-release=false" >> "$GITHUB_OUTPUT"
+
+          elif [[ "$BRANCH" == hotfix/* ]]; then
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+            echo "should-deploy=true" >> "$GITHUB_OUTPUT"
+            echo "is-release=false" >> "$GITHUB_OUTPUT"
+
+          else
+            echo "environment=dev" >> "$GITHUB_OUTPUT"
+            echo "should-deploy=false" >> "$GITHUB_OUTPUT"
+            echo "is-release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Debug Environment
+        run: |
+          echo "Branch: ${{ github.ref }}"
+          echo "Environment: ${{ steps.set-env.outputs.environment }}"
+          echo "Should Deploy: ${{ steps.set-env.outputs.should-deploy }}"
+          echo "Is Release: ${{ steps.set-env.outputs.is-release }}"
+
+
+  # ============================================================
+  # CI
+  # ============================================================
+  ci:
+    name: CI
+    needs: setup
+
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/CI.yml@main
+
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+
+
+  # ============================================================
+  # CD
+  # ============================================================
+  deploy-environment:
+    name: Deploy to ${{ needs.setup.outputs.environment }}
+
+    needs:
+      - setup
+      - ci
+
+    if: |
+      needs.setup.outputs.should-deploy == 'true' &&
+      github.event_name == 'push'
+
+    uses: mohammedzuhair25/node-js-project-example/.github/workflows/CD.yml@main
+
+    with:
+      environment: ${{ needs.setup.outputs.environment }}
+
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
