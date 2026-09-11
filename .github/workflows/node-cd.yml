@@ -172,6 +172,8 @@ jobs:
     name: Create Git Release Tag
     needs: Deploy-to-Staging
     runs-on: ubuntu-latest
+    permissions:
+     contents: write
 
     steps:
 
