@@ -168,3 +168,109 @@ jobs:
             -m "Update staging image to ${IMAGE_TAG}"
 
           git push origin main
+  create-release-tag:
+    name: Create Git Release Tag
+    needs: Deploy-to-Staging
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ------------------------------------------------------
+      # Checkout complete repository including tags
+      # ------------------------------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      # ------------------------------------------------------
+      # Create release tag
+      # ------------------------------------------------------
+
+      - name: Create and Push Git Tag
+        shell: bash
+        run: |
+
+          set -euo pipefail
+
+          TAG="v1.0.${GITHUB_RUN_NUMBER}"
+          COMMIT="${GITHUB_SHA}"
+
+          echo "=============================================="
+          echo "Creating release tag: $TAG"
+          echo "=============================================="
+
+          echo "Source commit:"
+          echo "$COMMIT"
+
+          # --------------------------------------------------
+          # Git configuration
+          # --------------------------------------------------
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # --------------------------------------------------
+          # Fetch latest tags
+          # --------------------------------------------------
+
+          echo ""
+          echo "Fetching tags..."
+
+          git fetch --tags --force
+
+          # --------------------------------------------------
+          # Check whether tag already exists
+          # --------------------------------------------------
+
+          if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
+            echo "ERROR: Tag $TAG already exists."
+            exit 1
+          fi
+
+          # --------------------------------------------------
+          # Verify commit
+          # --------------------------------------------------
+
+          echo ""
+          echo "Verifying source commit..."
+
+          git rev-parse "$COMMIT"
+
+          # --------------------------------------------------
+          # Create annotated release tag
+          # --------------------------------------------------
+
+          echo ""
+          echo "Creating tag..."
+
+          git tag -a "$TAG" "$COMMIT" \
+            -m "Release $TAG"
+
+          # --------------------------------------------------
+          # Push tag
+          # --------------------------------------------------
+
+          echo ""
+          echo "Pushing tag..."
+
+          git push origin "refs/tags/$TAG"
+
+          # --------------------------------------------------
+          # Verify remote tag
+          # --------------------------------------------------
+
+          echo ""
+          echo "Verifying remote tag..."
+
+          git ls-remote --tags origin "refs/tags/$TAG"
+
+          echo ""
+          echo "=============================================="
+          echo "Release tag created successfully"
+          echo "=============================================="
+          echo "Tag    : $TAG"
+          echo "Commit : $COMMIT"
+          echo "=============================================="
